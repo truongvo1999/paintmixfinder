@@ -40,8 +40,8 @@ export async function GET(request: Request) {
     where: {
       ...(brand ? { brandId: brand.id } : {}),
       OR: [
-        { code: { contains: query, mode: "insensitive" } },
-        { name: { contains: query, mode: "insensitive" } }
+        { code: { contains: query } },
+        { name: { contains: query } }
       ]
     },
     take: 50,
