@@ -14,26 +14,35 @@ const rankColor = (query: string, code: string, name: string) => {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const brandSlug = searchParams.get("brand");
+  const brandSlugRaw = searchParams.get("brand");
+  const brandSlug = brandSlugRaw?.trim() || null;
   const query = searchParams.get("q")?.trim() ?? "";
 
-  if (!brandSlug || !query) {
-    return Response.json({ results: [] });
+  if (!query) {
+    return Response.json({ error: "Query is required." }, { status: 400 });
   }
 
-  const brand = await prisma.brand.findUnique({
-    where: { slug: brandSlug },
-    select: { id: true }
-  });
+  const brand = brandSlug
+    ? await prisma.brand.findUnique({
+        where: { slug: brandSlug },
+        select: { id: true }
+      })
+    : null;
 
-  if (!brand) {
-    return Response.json({ results: [] });
+  if (brandSlug && !brand) {
+    return Response.json(
+      { error: `Brand not found for slug "${brandSlug}".` },
+      { status: 400 }
+    );
   }
 
   const colors = await prisma.color.findMany({
     where: {
-      brandId: brand.id,
-      OR: [{ code: { contains: query } }, { name: { contains: query } }]
+      ...(brand ? { brandId: brand.id } : {}),
+      OR: [
+        { code: { contains: query, mode: "insensitive" } },
+        { name: { contains: query, mode: "insensitive" } }
+      ]
     },
     take: 50,
     select: {
@@ -41,7 +50,13 @@ export async function GET(request: Request) {
       code: true,
       name: true,
       variant: true,
-      notes: true
+      notes: true,
+      brand: {
+        select: {
+          slug: true,
+          name: true
+        }
+      }
     }
   });
 
@@ -55,7 +70,11 @@ export async function GET(request: Request) {
       return a.code.localeCompare(b.code);
     })
     .slice(0, 20)
-    .map(({ rank, ...color }) => color);
+    .map(({ rank, brand, ...color }) => ({
+      ...color,
+      brandSlug: brand.slug,
+      brandName: brand.name
+    }));
 
   return Response.json({ results });
 }

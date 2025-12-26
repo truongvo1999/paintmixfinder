@@ -21,6 +21,7 @@ const useDebounce = (value: string, delay: number) => {
 };
 
 type Brand = { id: string; slug: string; name: string };
+type BrandRef = { slug: string; name: string };
 
 type ColorResult = {
   id: string;
@@ -28,6 +29,8 @@ type ColorResult = {
   name: string;
   variant: string | null;
   notes: string | null;
+  brandSlug: string;
+  brandName: string;
 };
 
 type FormulaComponent = {
@@ -89,7 +92,7 @@ const exportFormulaCsv = (response: FormulaResponse) => {
   URL.revokeObjectURL(url);
 };
 
-const useRecentColors = (color: ColorResult | null, brand: Brand | null) => {
+const useRecentColors = (color: ColorResult | null, brand: BrandRef | null) => {
   useEffect(() => {
     if (!color || !brand) return;
     const entry = {
@@ -203,13 +206,16 @@ export default function PaintMixApp() {
 
   const searchQuery = useQuery({
     queryKey: ["colors", brandSlug, debouncedQuery],
-    queryFn: () =>
-      fetchJson<{ results: ColorResult[] }>(
-        `/api/colors/search?brand=${brandSlug}&q=${encodeURIComponent(
-          debouncedQuery
-        )}`
-      ),
-    enabled: Boolean(brandSlug && debouncedQuery)
+    queryFn: () => {
+      const params = new URLSearchParams({ q: debouncedQuery });
+      if (brandSlug) {
+        params.set("brand", brandSlug);
+      }
+      return fetchJson<{ results: ColorResult[] }>(
+        `/api/colors/search?${params.toString()}`
+      );
+    },
+    enabled: Boolean(debouncedQuery)
   });
 
   const formulaQuery = useQuery({
@@ -222,7 +228,14 @@ export default function PaintMixApp() {
     placeholderData: (previous) => previous
   });
 
-  useRecentColors(selectedColor, brand);
+  const selectedBrand = useMemo<BrandRef | null>(() => {
+    if (selectedColor) {
+      return { slug: selectedColor.brandSlug, name: selectedColor.brandName };
+    }
+    return brand ? { slug: brand.slug, name: brand.name } : null;
+  }, [brand, selectedColor]);
+
+  useRecentColors(selectedColor, selectedBrand);
 
   const handleSelectColor = (color: ColorResult) => {
     setSelectedColor(color);
@@ -406,7 +419,7 @@ export default function PaintMixApp() {
                 }}
                 className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-base focus:border-slate-400 focus:outline-none"
               >
-                <option value="">Select a brand</option>
+                <option value="">All brands</option>
                 {brandsQuery.data?.brands.map((brandOption) => (
                   <option key={brandOption.id} value={brandOption.slug}>
                     {brandOption.name}
@@ -448,7 +461,7 @@ export default function PaintMixApp() {
               )}
               {!searchQuery.isLoading && results.length === 0 && (
                 <div className="p-4 text-sm text-slate-500">
-                  {brandSlug && debouncedQuery
+                  {debouncedQuery
                     ? "No colors found."
                     : "Search results will appear here."}
                 </div>
@@ -470,6 +483,9 @@ export default function PaintMixApp() {
                             Variant: {color.variant}
                           </div>
                         )}
+                        <div className="text-xs text-slate-400">
+                          {color.brandName} ({color.brandSlug})
+                        </div>
                       </div>
                       <span className="text-xs text-slate-400">View</span>
                     </button>
