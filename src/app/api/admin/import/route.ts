@@ -72,26 +72,55 @@ export async function POST(request: Request) {
       if (!brandId) {
         throw new Error(`Missing brand for color ${color.code}`);
       }
-      const saved = await tx.color.upsert({
-        where: {
-          brandId_code_variant: {
-            brandId,
-            code: color.code,
-            variant: color.variant
-          }
-        },
-        update: {
-          name: color.name,
-          notes: color.notes
-        },
-        create: {
-          brandId,
-          code: color.code,
-          name: color.name,
-          variant: color.variant,
-          notes: color.notes
-        }
-      });
+      const saved =
+        color.variant === null
+          ? await (async () => {
+              const existing = await tx.color.findFirst({
+                where: {
+                  brandId,
+                  code: color.code,
+                  variant: null
+                }
+              });
+              if (existing) {
+                return tx.color.update({
+                  where: { id: existing.id },
+                  data: {
+                    name: color.name,
+                    notes: color.notes
+                  }
+                });
+              }
+              return tx.color.create({
+                data: {
+                  brandId,
+                  code: color.code,
+                  name: color.name,
+                  variant: null,
+                  notes: color.notes
+                }
+              });
+            })()
+          : await tx.color.upsert({
+              where: {
+                brandId_code_variant: {
+                  brandId,
+                  code: color.code,
+                  variant: color.variant
+                }
+              },
+              update: {
+                name: color.name,
+                notes: color.notes
+              },
+              create: {
+                brandId,
+                code: color.code,
+                name: color.name,
+                variant: color.variant,
+                notes: color.notes
+              }
+            });
       const key = [color.brandSlug, color.code, color.variant ?? ""].join("::");
       colorMap.set(key, saved.id);
     }
