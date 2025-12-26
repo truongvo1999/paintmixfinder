@@ -1,12 +1,13 @@
 import AdminImportClient from "@/components/AdminImportClient";
 
-export default function AdminImportPage({
+export default async function AdminImportPage({
   searchParams
 }: {
-  searchParams: { key?: string };
+  searchParams: Promise<{ key?: string }>;
 }) {
+  const { key } = await searchParams;
   const adminKey = process.env.ADMIN_IMPORT_KEY;
-  if (!adminKey || searchParams.key !== adminKey) {
+  if (!adminKey || key !== adminKey) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
@@ -26,7 +27,7 @@ export default function AdminImportPage({
         Validate and import paint brand, color, and formula data.
       </p>
       <div className="mt-6">
-        <AdminImportClient adminKey={searchParams.key ?? ""} />
+        <AdminImportClient adminKey={key ?? ""} />
       </div>
     </div>
   );
