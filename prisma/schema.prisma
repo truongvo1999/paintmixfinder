@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id    String  @id @default(cuid())
+  slug  String  @unique
+  name  String
+  colors Color[]
+}
+
+model Color {
+  id        String             @id @default(cuid())
+  brandId   String
+  code      String
+  name      String
+  variant   String?
+  notes     String?
+  brand     Brand              @relation(fields: [brandId], references: [id])
+  components FormulaComponent[]
+
+  @@unique([brandId, code, variant])
+  @@index([brandId, code])
+  @@index([brandId, name])
+}
+
+model FormulaComponent {
+  id        String  @id @default(cuid())
+  colorId   String
+  tonerCode String
+  tonerName String
+  parts     Decimal
+  color     Color   @relation(fields: [colorId], references: [id])
+}
