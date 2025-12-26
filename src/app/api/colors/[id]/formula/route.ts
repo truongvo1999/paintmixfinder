@@ -10,9 +10,11 @@ const querySchema = z.object({
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!params?.id) {
+  const resolvedParams = await params;
+
+  if (!resolvedParams?.id) {
     return Response.json({ error: "Color id is required" }, { status: 400 });
   }
 
@@ -29,7 +31,7 @@ export async function GET(
   }
 
   const color = await prisma.color.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: { components: true, brand: true }
   });
 
