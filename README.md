@@ -67,6 +67,16 @@ Upload **exactly three** files:
 - tonerName (string, required)
 - parts (number, required)
 
+## Generating the Excel test file
+
+Binary files are not committed to the repository. Generate the Excel file locally from the CSV fixtures:
+
+```bash
+node scripts/generate-excel-from-csv.ts
+```
+
+This produces `paintmix-test.xlsx` with sheets named `brands`, `colors`, and `components` that match the CSV data exactly.
+
 ## Responsive QA checklist
 
 Test the user page at:
