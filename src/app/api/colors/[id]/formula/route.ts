@@ -12,6 +12,10 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (!params?.id) {
+    return Response.json({ error: "Color id is required" }, { status: 400 });
+  }
+
   const { searchParams } = new URL(request.url);
   const parseResult = querySchema.safeParse({
     totalGrams: searchParams.get("totalGrams")
