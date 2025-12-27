@@ -7,12 +7,13 @@ export default async function LocaleLayout({
   params
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  setRequestLocale(params.locale);
-  const messages = await getMessages({ locale: params.locale });
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const messages = await getMessages({ locale });
   return (
-    <NextIntlClientProvider locale={params.locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages}>
       <QueryProvider>{children}</QueryProvider>
     </NextIntlClientProvider>
   );
