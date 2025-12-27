@@ -9,12 +9,12 @@ type TabKey = "import" | "display";
 
 export default function AdminDashboardClient({ adminKey }: { adminKey: string }) {
   const t = useTranslations();
-  const [tab, setTab] = useState<TabKey>("import");
+  const [tab, setTab] = useState<TabKey>("display");
 
   return (
     <div className="space-y-6">
       <div className="flex gap-3 overflow-x-auto rounded-full bg-slate-100 p-1 text-sm">
-        {(["import", "display"] as const).map((key) => (
+        {(["display", "import"] as const).map((key) => (
           <button
             key={key}
             type="button"
@@ -29,10 +29,10 @@ export default function AdminDashboardClient({ adminKey }: { adminKey: string })
           </button>
         ))}
       </div>
-      {tab === "import" ? (
-        <AdminImportClient adminKey={adminKey} />
-      ) : (
+      {tab === "display" ? (
         <AdminDisplayClient adminKey={adminKey} />
+      ) : (
+        <AdminImportClient adminKey={adminKey} />
       )}
     </div>
   );

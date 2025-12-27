@@ -70,7 +70,7 @@ export async function DELETE(
     return Response.json({ error: "admin.errors.notFound" }, { status: 404 });
   }
   if (existing._count.colors > 0) {
-    return Response.json({ error: "admin.errors.brandHasColors" }, { status: 400 });
+    return Response.json({ error: "admin.errors.brandHasColors" }, { status: 409 });
   }
 
   await prisma.brand.delete({ where: { id } });
