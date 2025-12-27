@@ -1,3 +1,4 @@
+
 brandSlug,code,name,productionDate,colorCar,notes
 debeer,B123,Candy Red,2024-01-15,Toyota,Metallic finish
 debeer,B124,Pearl White,2024-01-20,Honda,High opacity
@@ -8,6 +9,7 @@ sentara,S215,Emerald Green,2024-03-02,,Tri-coat system
 cpp,C310,Silver Mist,2024-01-28,Audi,Fine metallic
 cpp,C311,Amber Glow,2024-02-08,,Warm solid
 cpp,C320,Night Black,2024-03-05,,Deep shade
+cpp,RECVF3,Red Vinfast VF3, 2024-03-05,Vinfast VF3,Red
 feargus,F410,Storm Gray,2024-01-22,,Soft metallic
 feargus,F411,Crimson Pearl,2024-02-25,,Pearl finish
 feargus,F420,Forest Jade,2024-03-10,,Rich tone
