@@ -1,10 +1,12 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
+type ImportStep = "brands" | "colors" | "components";
+
 type ImportError = {
-  table: "brands" | "colors" | "components";
+  table: ImportStep;
   row: number;
   message: string;
   field?: string;
@@ -12,365 +14,370 @@ type ImportError = {
   messageValues?: Record<string, string | number>;
 };
 
-type ImportPreview = {
-  data: {
-    brands: Record<string, string | number | null>[];
-    colors: Record<string, string | number | null>[];
-    components: Record<string, string | number | null>[];
-  };
-  errors: ImportError[];
-  samples: {
-    brands: Record<string, string | number | null>[];
-    colors: Record<string, string | number | null>[];
-    components: Record<string, string | number | null>[];
-  };
-  blocked: boolean;
-  result?: {
-    brands: number;
-    colors: number;
-    components: number;
-  };
+type ImportResult = {
+  created: number;
+  updated: number;
+  skipped: number;
 };
 
-const groupErrors = (errors: ImportError[]) => {
-  return errors.reduce<Record<string, ImportError[]>>((acc, error) => {
-    const key = `${error.table}`;
-    acc[key] = acc[key] ?? [];
-    acc[key].push(error);
-    return acc;
-  }, {});
+type ImportPreview = {
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  errors: ImportError[];
+  samples: Record<string, string | number | null>[];
+  blocked: boolean;
+  result?: ImportResult;
+};
+
+const steps: { key: ImportStep; order: number }[] = [
+  { key: "brands", order: 1 },
+  { key: "colors", order: 2 },
+  { key: "components", order: 3 }
+];
+
+const formatErrorMessage = (
+  t: ReturnType<typeof useTranslations>,
+  errorItem: ImportError
+) => {
+  const field = errorItem.field ? t(`fields.${errorItem.field}`) : undefined;
+  if (errorItem.messageKey) {
+    return t(errorItem.messageKey, {
+      ...errorItem.messageValues,
+      field
+    });
+  }
+  if (errorItem.message.startsWith("validation.")) {
+    return t(errorItem.message, { field });
+  }
+  return errorItem.message;
 };
 
 export default function AdminImportClient({ adminKey }: { adminKey: string }) {
   const t = useTranslations();
-  const locale = useLocale();
-  const [excelFile, setExcelFile] = useState<File | null>(null);
-  const [csvFiles, setCsvFiles] = useState<{ [key: string]: File | null }>({
+  const [files, setFiles] = useState<Record<ImportStep, File | null>>({
     brands: null,
     colors: null,
     components: null
   });
-  const [preview, setPreview] = useState<ImportPreview | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<Record<ImportStep, ImportPreview | null>>({
+    brands: null,
+    colors: null,
+    components: null
+  });
+  const [committed, setCommitted] = useState<Record<ImportStep, boolean>>({
+    brands: false,
+    colors: false,
+    components: false
+  });
+  const [loadingStep, setLoadingStep] = useState<ImportStep | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  const hasCsv = csvFiles.brands || csvFiles.colors || csvFiles.components;
-
-  const canPreview = excelFile || (csvFiles.brands && csvFiles.colors && csvFiles.components);
-
-  const errorsByTable = useMemo(
-    () => (preview?.errors ? groupErrors(preview.errors) : {}),
-    [preview?.errors]
+  const enabledSteps = useMemo(
+    () => ({
+      brands: true,
+      colors: committed.brands,
+      components: committed.colors
+    }),
+    [committed.brands, committed.colors]
   );
 
-  const dateFormatter = useMemo(() => {
-    const options = locale.startsWith("vi")
-      ? { day: "2-digit", month: "2-digit", year: "numeric" }
-      : { day: "numeric", month: "short", year: "numeric" };
-    return new Intl.DateTimeFormat(locale, options);
-  }, [locale]);
-
-  const formatDate = (value?: string | number | Date | null) => {
-    if (!value) return "-";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "-";
-    return dateFormatter.format(date);
+  const handleFileChange = (step: ImportStep, file: File | null) => {
+    setFiles((prev) => ({ ...prev, [step]: file }));
+    setPreviews((prev) => ({ ...prev, [step]: null }));
+    if (step === "brands") {
+      setCommitted({ brands: false, colors: false, components: false });
+    }
+    if (step === "colors") {
+      setCommitted((prev) => ({ ...prev, colors: false, components: false }));
+    }
+    if (step === "components") {
+      setCommitted((prev) => ({ ...prev, components: false }));
+    }
   };
 
-  const formatErrorMessage = (errorItem: ImportError) => {
-    const field = errorItem.field ? t(`fields.${errorItem.field}`) : undefined;
-    if (errorItem.messageKey) {
-      return t(errorItem.messageKey, {
-        ...errorItem.messageValues,
-        field
-      });
-    }
-    if (errorItem.message.startsWith("validation.")) {
-      return t(errorItem.message, { field });
-    }
-    return errorItem.message;
-  };
-
-  const buildFormData = () => {
-    const form = new FormData();
-    if (excelFile) {
-      form.append("excel", excelFile);
-    } else {
-      if (csvFiles.brands) form.append("brands", csvFiles.brands);
-      if (csvFiles.colors) form.append("colors", csvFiles.colors);
-      if (csvFiles.components) form.append("components", csvFiles.components);
-    }
-    return form;
-  };
-
-  const runPreview = async () => {
-    if (!canPreview) return;
-    setLoading(true);
-    setError(null);
+  const runPreview = async (step: ImportStep) => {
+    const file = files[step];
+    if (!file) return;
+    setLoadingStep(step);
+    setMessage(null);
+    const formData = new FormData();
+    formData.append("file", file);
     try {
-      const form = buildFormData();
-      form.append("step", "preview");
-      const res = await fetch(`/api/admin/import?key=${adminKey}`, {
-        method: "POST",
-        body: form
-      });
+      const res = await fetch(
+        `/api/admin/import/${step}?dryRun=1&key=${adminKey}`,
+        {
+          method: "POST",
+          body: formData
+        }
+      );
       const data = (await res.json()) as ImportPreview;
       if (!res.ok) {
-        const serverError = data?.errors?.[0];
-        if (serverError) {
-          throw new Error(formatErrorMessage(serverError));
-        }
         throw new Error(
           typeof (data as { error?: string }).error === "string"
             ? t((data as { error?: string }).error as string)
-            : t("admin.errors.previewFailed")
+            : t("admin.import.previewFailed")
         );
       }
-      setPreview(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.previewFailed"));
+      setPreviews((prev) => ({ ...prev, [step]: data }));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t("admin.import.previewFailed"));
     } finally {
-      setLoading(false);
+      setLoadingStep(null);
     }
   };
 
-  const runImport = async () => {
-    if (!preview || preview.blocked) return;
-    setLoading(true);
-    setError(null);
+  const runCommit = async (step: ImportStep) => {
+    const file = files[step];
+    if (!file) return;
+    setLoadingStep(step);
+    setMessage(null);
+    const formData = new FormData();
+    formData.append("file", file);
     try {
-      const form = buildFormData();
-      form.append("step", "commit");
-      const res = await fetch(`/api/admin/import?key=${adminKey}`, {
+      const res = await fetch(`/api/admin/import/${step}?key=${adminKey}`, {
         method: "POST",
-        body: form
+        body: formData
       });
       const data = (await res.json()) as ImportPreview;
       if (!res.ok) {
-        const serverError = data?.errors?.[0];
-        if (serverError) {
-          throw new Error(formatErrorMessage(serverError));
-        }
         throw new Error(
           typeof (data as { error?: string }).error === "string"
             ? t((data as { error?: string }).error as string)
-            : t("admin.errors.importFailed")
+            : t("admin.import.commitFailed")
         );
       }
-      setPreview(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.importFailed"));
+      setPreviews((prev) => ({ ...prev, [step]: data }));
+      setCommitted((prev) => ({ ...prev, [step]: true }));
+      setMessage(
+        t("admin.import.success", {
+          step: t(`admin.import.step.${step}`)
+        })
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t("admin.import.commitFailed"));
     } finally {
-      setLoading(false);
+      setLoadingStep(null);
     }
+  };
+
+  const downloadErrors = (step: ImportStep) => {
+    const preview = previews[step];
+    if (!preview || preview.errors.length === 0) return;
+    const rows = preview.errors.map((error) => ({
+      step,
+      row: error.row,
+      field: error.field ?? "",
+      message: formatErrorMessage(t, error)
+    }));
+    const header = ["step", "row", "field", "message"];
+    const csv = [
+      header.join(","),
+      ...rows.map((row) =>
+        header.map((key) => JSON.stringify(row[key as keyof typeof row] ?? "")).join(",")
+      )
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${step}-errors.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">{t("admin.upload.title")}</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          {t("admin.upload.description")}
-        </p>
-        <div className="mt-4 grid gap-6 md:grid-cols-2">
-          <div className="space-y-3 rounded-xl border border-dashed border-slate-200 p-4">
-            <p className="text-sm font-semibold">{t("admin.upload.excel")}</p>
-            <input
-              type="file"
-              accept=".xlsx"
-              onChange={(event) => {
-                const file = event.target.files?.[0] ?? null;
-                setExcelFile(file);
-                if (file) {
-                  setCsvFiles({ brands: null, colors: null, components: null });
-                }
-              }}
-            />
-            {excelFile && (
-              <p className="text-xs text-slate-500">
-                {t("admin.upload.selectedFile", { name: excelFile.name })}
-              </p>
-            )}
-          </div>
-          <div className="space-y-3 rounded-xl border border-dashed border-slate-200 p-4">
-            <p className="text-sm font-semibold">{t("admin.upload.csv")}</p>
-            {(["brands", "colors", "components"] as const).map((key) => (
-              <label key={key} className="block text-xs text-slate-500">
-                {t(`admin.upload.csvFiles.${key}`)}
+      {message && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          {message}
+        </div>
+      )}
+      <div className="space-y-6">
+        {steps.map((step) => {
+          const preview = previews[step.key];
+          const isEnabled = enabledSteps[step.key];
+          const isLoading = loadingStep === step.key;
+          return (
+            <div key={step.key} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-slate-400">
+                    {t("admin.import.stepLabel", { step: step.order })}
+                  </p>
+                  <h3 className="text-lg font-semibold">
+                    {t(`admin.import.step.${step.key}`)}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {t(`admin.import.stepDescription.${step.key}`)}
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    committed[step.key]
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {committed[step.key]
+                    ? t("admin.import.status.completed")
+                    : t("admin.import.status.pending")}
+                </span>
+              </div>
+              <div className="mt-4 space-y-3">
                 <input
                   type="file"
                   accept=".csv"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0] ?? null;
-                    setCsvFiles((prev) => ({ ...prev, [key]: file }));
-                    if (file) {
-                      setExcelFile(null);
-                    }
-                  }}
-                  className="mt-1 block w-full text-sm"
+                  disabled={!isEnabled}
+                  onChange={(event) =>
+                    handleFileChange(step.key, event.target.files?.[0] ?? null)
+                  }
+                  className="block w-full text-sm disabled:cursor-not-allowed"
                 />
-              </label>
-            ))}
-          </div>
-        </div>
-        {error && (
-          <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-            {error}
-          </div>
-        )}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={runPreview}
-            disabled={!canPreview || loading}
-            className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-          >
-            {loading ? t("common.working") : t("common.preview")}
-          </button>
-          <button
-            type="button"
-            onClick={runImport}
-            disabled={!preview || preview.blocked || loading}
-            className="rounded-xl border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:text-slate-300"
-          >
-            {t("common.import")}
-          </button>
-        </div>
-        {hasCsv && !canPreview && (
-          <p className="mt-2 text-xs text-slate-500">
-            {t("admin.upload.csvHint")}
-          </p>
-        )}
-      </div>
-      {preview && (
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <h3 className="text-base font-semibold">{t("common.preview")}</h3>
-            <div className="mt-3 grid gap-4 text-sm text-slate-600 md:grid-cols-3">
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs uppercase text-slate-400">
-                  {t("tables.brands")}
-                </p>
-                <p className="text-lg font-semibold text-slate-800">
-                  {preview.data.brands.length}
-                </p>
+                {!isEnabled && (
+                  <p className="text-xs text-slate-500">
+                    {t("admin.import.sequenceHint")}
+                  </p>
+                )}
               </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs uppercase text-slate-400">
-                  {t("tables.colors")}
-                </p>
-                <p className="text-lg font-semibold text-slate-800">
-                  {preview.data.colors.length}
-                </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => runPreview(step.key)}
+                  disabled={!files[step.key] || !isEnabled || isLoading}
+                  className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  {isLoading ? t("common.working") : t("admin.import.preview")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runCommit(step.key)}
+                  disabled={!preview || preview.blocked || isLoading}
+                  className="rounded-xl border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:text-slate-300"
+                >
+                  {t("admin.import.commit")}
+                </button>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs uppercase text-slate-400">
-                  {t("tables.components")}
-                </p>
-                <p className="text-lg font-semibold text-slate-800">
-                  {preview.data.components.length}
-                </p>
-              </div>
-            </div>
-            {preview.blocked && (
-              <div className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                {t("admin.preview.blocked")}
-              </div>
-            )}
-            {preview.result && (
-              <div className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                {t("admin.preview.completed", {
-                  brands: preview.result.brands,
-                  colors: preview.result.colors,
-                  components: preview.result.components
-                })}
-              </div>
-            )}
-          </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            {(["brands", "colors", "components"] as const).map((table) => (
-              <div key={table} className="rounded-2xl border border-slate-200 bg-white p-4">
-                <h4 className="text-sm font-semibold text-slate-700">
-                  {t(`tables.${table}`)}
-                </h4>
-                <div className="mt-3 space-y-2 text-xs text-slate-500">
-                  {preview.samples[table].length === 0 && (
-                    <p>{t("admin.preview.noRows")}</p>
-                  )}
-                  {preview.samples[table].map((row, index) =>
-                    table === "colors" ? (
-                      <div
-                        key={index}
-                        className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600"
-                      >
-                        <div className="font-semibold text-slate-700">
-                          {String(row.code ?? "")} {String(row.name ?? "")}
-                        </div>
-                        <div>
-                          {t("fields.brandSlug")}: {String(row.brandSlug ?? "")}
-                        </div>
-                        {row.productionDate && (
-                          <div>
-                            {t("color.productionDate.label")}:{" "}
-                            {formatDate(row.productionDate as string)}
-                          </div>
-                        )}
-                        {row.colorCar && (
-                          <div>
-                            {t("color.car.label")}: {row.colorCar}
-                          </div>
-                        )}
-                        {row.notes && (
-                          <div>
-                            {t("fields.notes")}: {row.notes}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <pre
-                        key={index}
-                        className="overflow-x-auto rounded-lg bg-slate-50 p-2"
-                      >
-                        {JSON.stringify(row, null, 2)}
-                      </pre>
-                    )
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <h4 className="text-sm font-semibold text-slate-700">
-              {t("admin.errors.title")}
-            </h4>
-            {preview.errors.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">
-                {t("admin.errors.none")}
-              </p>
-            ) : (
-              <div className="mt-3 space-y-4">
-                {Object.entries(errorsByTable).map(([table, errors]) => (
-                  <div key={table}>
-                    <p className="text-xs font-semibold uppercase text-slate-400">
-                      {t(`tables.${table as "brands" | "colors" | "components"}`)}
-                    </p>
-                    <ul className="mt-2 space-y-1 text-sm text-red-600">
-                      {errors.map((errorItem, index) => (
-                        <li key={`${table}-${index}`}>
-                          {t("admin.errors.row", {
-                            row: errorItem.row,
-                            message: formatErrorMessage(errorItem)
-                          })}
-                        </li>
-                      ))}
-                    </ul>
+              {preview && (
+                <div className="mt-6 space-y-4">
+                  <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-3">
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <p className="text-xs uppercase text-slate-400">
+                        {t("admin.import.totalRows")}
+                      </p>
+                      <p className="text-lg font-semibold text-slate-800">
+                        {preview.totalRows}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <p className="text-xs uppercase text-slate-400">
+                        {t("admin.import.validRows")}
+                      </p>
+                      <p className="text-lg font-semibold text-slate-800">
+                        {preview.validRows}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <p className="text-xs uppercase text-slate-400">
+                        {t("admin.import.invalidRows")}
+                      </p>
+                      <p className="text-lg font-semibold text-slate-800">
+                        {preview.invalidRows}
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                  {preview.blocked && (
+                    <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                      {t("admin.import.blocked")}
+                    </div>
+                  )}
+                  {preview.result && (
+                    <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                      {t("admin.import.summary", {
+                        created: preview.result.created,
+                        updated: preview.result.updated,
+                        skipped: preview.result.skipped
+                      })}
+                    </div>
+                  )}
+                  <div className="rounded-xl border border-slate-200">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-2">
+                      <h4 className="text-sm font-semibold text-slate-700">
+                        {t("admin.import.preview")}
+                      </h4>
+                      <p className="text-xs text-slate-400">
+                        {t("admin.import.previewHint")}
+                      </p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      {preview.samples.length === 0 ? (
+                        <p className="px-4 py-3 text-sm text-slate-500">
+                          {t("admin.import.noRows")}
+                        </p>
+                      ) : (
+                        <table className="min-w-full text-left text-sm">
+                          <thead className="bg-slate-50 text-xs uppercase text-slate-400">
+                            <tr>
+                              {Object.keys(preview.samples[0] ?? {}).map((key) => (
+                                <th key={key} className="px-4 py-2">
+                                  {key}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {preview.samples.map((row, index) => (
+                              <tr key={index} className="border-t border-slate-100">
+                                {Object.keys(preview.samples[0] ?? {}).map((key) => (
+                                  <td key={key} className="px-4 py-2 text-slate-600">
+                                    {row[key] === null || row[key] === undefined
+                                      ? "-"
+                                      : String(row[key])}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-200">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-2">
+                      <h4 className="text-sm font-semibold text-slate-700">
+                        {t("admin.import.errors.title")}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => downloadErrors(step.key)}
+                        disabled={preview.errors.length === 0}
+                        className="text-xs font-semibold text-slate-600 disabled:text-slate-300"
+                      >
+                        {t("admin.import.errors.download")}
+                      </button>
+                    </div>
+                    {preview.errors.length === 0 ? (
+                      <p className="px-4 py-3 text-sm text-slate-500">
+                        {t("admin.import.errors.none")}
+                      </p>
+                    ) : (
+                      <ul className="space-y-2 px-4 py-3 text-sm text-red-600">
+                        {preview.errors.map((errorItem, index) => (
+                          <li key={`${step.key}-${index}`}>
+                            {t("admin.import.errors.row", {
+                              row: errorItem.row,
+                              message: formatErrorMessage(t, errorItem)
+                            })}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

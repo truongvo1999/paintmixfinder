@@ -11,7 +11,8 @@
     "view": "Xem",
     "preview": "Xem trước",
     "import": "Nhập",
-    "working": "Đang xử lý..."
+    "working": "Đang xử lý...",
+    "loading": "Đang tải..."
   },
   "search": {
     "brandLabel": "Hãng/hệ sơn",
@@ -71,6 +72,18 @@
     "colors": "Màu",
     "components": "Thành phần"
   },
+  "actions": {
+    "add": "Thêm",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "close": "Đóng",
+    "prev": "Trước",
+    "next": "Sau",
+    "actions": "Thao tác"
+  },
   "fields": {
     "brandSlug": "Mã hãng",
     "code": "Mã",
@@ -86,6 +99,10 @@
   },
   "validation": {
     "required": "{field} là bắt buộc.",
+    "notFound": "Không tìm thấy {field}.",
+    "slug": {
+      "invalid": "{field} phải viết thường và chỉ chứa chữ, số hoặc dấu gạch ngang."
+    },
     "variant": {
       "invalid": "{field} phải là V1 hoặc V2."
     },
@@ -108,40 +125,92 @@
     "unknownColorReference": "Không tìm thấy màu: {colorCode} ({variant})"
   },
   "admin": {
-    "title": "Nhập dữ liệu",
-    "subtitle": "Kiểm tra và nhập dữ liệu hãng sơn, màu sơn và công thức.",
+    "title": "Quản trị",
+    "subtitle": "Quản lý nhập liệu và dữ liệu danh mục.",
+    "tabs": {
+      "import": "Nhập",
+      "display": "Hiển thị"
+    },
     "unauthorized": {
       "title": "Không có quyền",
       "message": "Cung cấp khóa admin hợp lệ để truy cập trang này."
     },
-    "upload": {
-      "title": "Tải dữ liệu",
-      "description": "Tải một tệp Excel với sheet tên brands, colors, components hoặc tải ba tệp CSV tên brands.csv, colors.csv, components.csv.",
-      "excel": "Excel",
-      "csv": "CSV",
-      "selectedFile": "Đã chọn: {name}",
-      "csvFiles": {
-        "brands": "brands.csv",
-        "colors": "colors.csv",
-        "components": "components.csv"
+    "import": {
+      "stepLabel": "Bước {step}",
+      "step": {
+        "brands": "CSV Hãng",
+        "colors": "CSV Màu",
+        "components": "CSV Thành phần"
       },
-      "csvHint": "Tải đủ ba tệp CSV để bật xem trước."
-    },
-    "preview": {
+      "stepDescription": {
+        "brands": "Nhập hãng trước để mở khóa màu.",
+        "colors": "Nhập màu sau khi đã có hãng.",
+        "components": "Nhập thành phần sau khi đã có màu."
+      },
+      "status": {
+        "completed": "Đã xong",
+        "pending": "Chưa xong"
+      },
+      "sequenceHint": "Hoàn thành bước trước để mở khóa bước này.",
+      "preview": "Xem trước",
+      "previewHint": "Hiển thị 10 dòng đầu tiên.",
+      "commit": "Xác nhận nhập",
+      "success": "Đã nhập {step}.",
       "blocked": "Hãy sửa lỗi xác thực trước khi nhập.",
-      "completed": "Nhập xong: {brands} hãng, {colors} màu, {components} thành phần.",
-      "noRows": "Không có dòng dữ liệu."
+      "summary": "Tạo {created}, cập nhật {updated}, bỏ qua {skipped}.",
+      "totalRows": "Tổng số dòng",
+      "validRows": "Dòng hợp lệ",
+      "invalidRows": "Dòng lỗi",
+      "noRows": "Không có dòng dữ liệu.",
+      "previewFailed": "Xem trước thất bại.",
+      "commitFailed": "Nhập thất bại.",
+      "errors": {
+        "title": "Lỗi",
+        "none": "Không có lỗi.",
+        "row": "Dòng {row}: {message}",
+        "download": "Tải báo cáo lỗi"
+      }
+    },
+    "display": {
+      "brands": "Hãng",
+      "colors": "Màu",
+      "components": "Thành phần"
+    },
+    "search": {
+      "brands": "Tìm theo mã hoặc tên",
+      "colors": "Tìm theo mã hoặc tên",
+      "components": "Tìm theo mã mực hoặc mã màu"
+    },
+    "pagination": "Trang {page} / {totalPages}",
+    "empty": "Không có dữ liệu.",
+    "confirmDelete": {
+      "title": "Xác nhận xóa",
+      "brand": "Hãng này chưa có màu. Xóa?",
+      "color": "Màu này chưa có thành phần. Xóa?",
+      "component": "Xóa thành phần này?"
+    },
+    "autocomplete": {
+      "brand": "Tìm hãng",
+      "color": "Tìm mã màu",
+      "selectBrand": "Chọn hãng trước",
+      "toner": "Tìm mã mực"
     },
     "errors": {
-      "title": "Lỗi",
-      "none": "Không có lỗi.",
-      "row": "Dòng {row}: {message}",
-      "previewFailed": "Xem trước thất bại.",
-      "importFailed": "Nhập thất bại.",
-      "unauthorized": "Không có quyền.",
+      "loadFailed": "Tải dữ liệu thất bại.",
+      "saveFailed": "Lưu thất bại.",
+      "deleteFailed": "Xóa thất bại.",
+      "invalidPayload": "Dữ liệu không hợp lệ.",
+      "duplicateBrand": "Mã hãng đã tồn tại.",
+      "duplicateColor": "Mã màu đã tồn tại cho hãng này.",
+      "duplicateComponent": "Thành phần đã tồn tại cho màu và biến thể này.",
+      "brandHasColors": "Cần xóa màu trước khi xóa hãng.",
+      "colorHasComponents": "Cần xóa thành phần trước khi xóa màu.",
+      "notFound": "Không tìm thấy dữ liệu.",
+      "missingFile": "Chọn tệp CSV để nhập.",
       "invalidStep": "Bước nhập không hợp lệ.",
       "invalidUpload": "Tệp tải lên không hợp lệ.",
-      "missingFiles": "Cần một tệp Excel hoặc ba tệp CSV."
+      "missingFiles": "Cần tệp CSV cho từng bước.",
+      "unauthorized": "Không có quyền."
     }
   }
 }

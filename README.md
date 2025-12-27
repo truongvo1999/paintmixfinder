@@ -30,21 +30,16 @@ DATABASE_URL="file:./dev.db"
 ADMIN_IMPORT_KEY="your-secret-key"
 ```
 
-## Admin import instructions
+## Admin instructions
 
-Visit: `http://localhost:3000/en/admin/import?key=your-secret-key`
+Visit: `http://localhost:3000/en/admin?key=your-secret-key`
 
-Supported formats:
+### Import flow (CSV only, sequential)
 
-### Excel
-- Upload one `.xlsx` file.
-- Sheets must be named exactly: `brands`, `colors`, `components`.
-
-### CSV
-Upload **exactly three** files:
-- `brands.csv`
-- `colors.csv`
-- `components.csv`
+Import must follow the sequence:
+1. `brands.csv`
+2. `colors.csv`
+3. `components.csv`
 
 ### Required columns
 
@@ -79,6 +74,16 @@ Accepted import formats for `productionDate`:
 Additional rules:
 - `productionDate` must be a valid date.
 - `productionDate` cannot be in the future.
+
+## Admin QA checklist
+
+- Import sequence enforced.
+- Preview shows row errors.
+- Commit writes correct counts.
+- Display tables show correct data.
+- CRUD validates and persists.
+- Autocomplete works and is keyboard-friendly.
+- Mobile layouts usable.
 
 ## Variant data model
 

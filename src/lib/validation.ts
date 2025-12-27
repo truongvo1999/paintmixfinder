@@ -1,7 +1,12 @@
 import { z } from "zod";
 
+const brandSlugSchema = z
+  .string()
+  .min(1, { message: "validation.required" })
+  .regex(/^[a-z0-9-]+$/, { message: "validation.slug.invalid" });
+
 export const brandRowSchema = z.object({
-  slug: z.string().min(1, { message: "validation.required" }),
+  slug: brandSlugSchema,
   name: z.string().min(1, { message: "validation.required" })
 });
 
@@ -73,7 +78,7 @@ const colorCarSchema = z.preprocess(
 );
 
 export const colorRowSchema = z.object({
-  brandSlug: z.string().min(1, { message: "validation.required" }),
+  brandSlug: brandSlugSchema,
   code: z.string().min(1, { message: "validation.required" }),
   name: z.string().min(1, { message: "validation.required" }),
   productionDate: productionDateSchema.optional(),
@@ -85,7 +90,7 @@ export const colorRowSchema = z.object({
 });
 
 export const componentRowSchema = z.object({
-  brandSlug: z.string().min(1, { message: "validation.required" }),
+  brandSlug: brandSlugSchema,
   colorCode: z.string().min(1, { message: "validation.required" }),
   variant: colorVariantSchema,
   tonerCode: z.string().min(1, { message: "validation.required" }),

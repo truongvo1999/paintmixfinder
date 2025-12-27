@@ -40,4 +40,5 @@ model FormulaComponent {
   color     Color   @relation(fields: [colorId], references: [id])
 
   @@index([colorId, variant])
+  @@unique([colorId, variant, tonerCode])
 }
