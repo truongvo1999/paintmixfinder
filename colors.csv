@@ -1,5 +1,13 @@
 brandSlug,code,name,variant,productionDate,notes
 debeer,B123,Candy Red,V1,2024-01-15,Metallic finish
-debeer,B124,Pearl White,V2,2024-01-20,High opacity
+debeer,B124,Pearl White,V1,2024-01-20,High opacity
 debeer,B200,Graphite Gray,V1,2024-02-05,Fine flake
 sentara,S210,Deep Blue,V1,2024-02-12,Solid color
+sentara,S211,Sunset Orange,V1,2024-02-18,High chroma
+sentara,S215,Emerald Green,V2,2024-03-02,Tri-coat system
+cpp,C310,Silver Mist,V1,2024-01-28,Fine metallic
+cpp,C311,Amber Glow,V1,2024-02-08,Warm solid
+cpp,C320,Night Black,V1,2024-03-05,Deep shade
+feargus,F410,Storm Gray,V1,2024-01-22,Soft metallic
+feargus,F411,Crimson Pearl,V2,2024-02-25,Pearl finish
+feargus,F420,Forest Jade,V1,2024-03-10,Rich tone
