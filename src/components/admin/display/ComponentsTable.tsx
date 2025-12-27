@@ -26,6 +26,16 @@ type ApiError = {
 
 const pageSize = 10;
 
+const parseJsonResponse = async <T,>(res: Response): Promise<T | null> => {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+};
+
 export default function ComponentsTable({ adminKey }: { adminKey: string }) {
   const t = useTranslations();
   const [data, setData] = useState<ComponentRow[]>([]);
@@ -127,9 +137,9 @@ export default function ComponentsTable({ adminKey }: { adminKey: string }) {
     });
     if (search) params.set("query", search);
     const res = await fetch(`/api/admin/brands?${params.toString()}`);
-    const json = await res.json();
-    if (!res.ok) return [];
-    return (json.data as { slug: string; name: string }[]).map((brand) => ({
+    const json = await parseJsonResponse<{ data?: { slug: string; name: string }[] }>(res);
+    if (!res.ok || !json?.data) return [];
+    return json.data.map((brand) => ({
       value: brand.slug,
       label: `${brand.slug} · ${brand.name}`
     }));
@@ -145,9 +155,9 @@ export default function ComponentsTable({ adminKey }: { adminKey: string }) {
     });
     if (search) params.set("query", search);
     const res = await fetch(`/api/admin/colors?${params.toString()}`);
-    const json = await res.json();
-    if (!res.ok) return [];
-    return (json.data as { code: string; name: string }[]).map((color) => ({
+    const json = await parseJsonResponse<{ data?: { code: string; name: string }[] }>(res);
+    if (!res.ok || !json?.data) return [];
+    return json.data.map((color) => ({
       value: color.code,
       label: `${color.code} · ${color.name}`
     }));
@@ -161,10 +171,12 @@ export default function ComponentsTable({ adminKey }: { adminKey: string }) {
     });
     if (search) params.set("query", search);
     const res = await fetch(`/api/admin/components?${params.toString()}`);
-    const json = await res.json();
-    if (!res.ok) return [];
+    const json = await parseJsonResponse<{ data?: { tonerCode: string; tonerName: string }[] }>(
+      res
+    );
+    if (!res.ok || !json?.data) return [];
     const seen = new Map<string, string>();
-    (json.data as { tonerCode: string; tonerName: string }[]).forEach((item) => {
+    json.data.forEach((item) => {
       if (!seen.has(item.tonerCode)) {
         seen.set(item.tonerCode, item.tonerName);
       }
