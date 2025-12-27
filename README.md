@@ -32,7 +32,7 @@ ADMIN_IMPORT_KEY="your-secret-key"
 
 ## Admin import instructions
 
-Visit: `http://localhost:3000/admin/import?key=your-secret-key`
+Visit: `http://localhost:3000/en/admin/import?key=your-secret-key`
 
 Supported formats:
 
@@ -56,16 +56,36 @@ Upload **exactly three** files:
 - brandSlug (string, required)
 - code (string, required)
 - name (string, required)
-- variant (string, optional)
+- variant (string, required: V1 or V2)
+- productionDate (string, required, ISO date)
 - notes (string, optional)
 
 **components**
 - brandSlug (string, required)
 - colorCode (string, required)
-- colorVariant (string, optional)
+- colorVariant (string, required: V1 or V2)
 - tonerCode (string, required)
 - tonerName (string, required)
 - parts (number, required)
+
+### Production date field
+
+- `productionDate` is required for every color and stored as a database `DateTime`.
+- For existing rows during migration, `variant` defaults to `V1` and `productionDate` defaults to `2024-01-01`.
+
+Accepted import formats for `productionDate`:
+- `YYYY-MM-DD` (preferred)
+- ISO 8601 date-time strings
+
+Additional rules:
+- `productionDate` must be a valid date.
+- `productionDate` cannot be in the future.
+
+### Localization (i18n)
+
+- Supported locales: `en`, `vi`.
+- Dates are localized only in the UI using the active locale.
+- API responses remain language-neutral and return ISO strings for dates.
 
 ## Generating the Excel test file
 

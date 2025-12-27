@@ -15,14 +15,15 @@ model Brand {
 }
 
 model Color {
-  id        String             @id @default(cuid())
-  brandId   String
-  code      String
-  name      String
-  variant   String?
-  notes     String?
-  brand     Brand              @relation(fields: [brandId], references: [id])
-  components FormulaComponent[]
+  id             String             @id @default(cuid())
+  brandId        String
+  code           String
+  name           String
+  variant        String             @default("V1")
+  productionDate DateTime           @default(now())
+  notes          String?
+  brand          Brand              @relation(fields: [brandId], references: [id])
+  components     FormulaComponent[]
 
   @@unique([brandId, code, variant])
   @@index([brandId, code])

@@ -1,24 +1,28 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 type ImportError = {
   table: "brands" | "colors" | "components";
   row: number;
   message: string;
+  field?: string;
+  messageKey?: string;
+  messageValues?: Record<string, string | number>;
 };
 
 type ImportPreview = {
   data: {
-    brands: Record<string, string>[];
-    colors: Record<string, string>[];
-    components: Record<string, string>[];
+    brands: Record<string, string | number | null>[];
+    colors: Record<string, string | number | null>[];
+    components: Record<string, string | number | null>[];
   };
   errors: ImportError[];
   samples: {
-    brands: Record<string, string>[];
-    colors: Record<string, string>[];
-    components: Record<string, string>[];
+    brands: Record<string, string | number | null>[];
+    colors: Record<string, string | number | null>[];
+    components: Record<string, string | number | null>[];
   };
   blocked: boolean;
   result?: {
@@ -38,6 +42,8 @@ const groupErrors = (errors: ImportError[]) => {
 };
 
 export default function AdminImportClient({ adminKey }: { adminKey: string }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [csvFiles, setCsvFiles] = useState<{ [key: string]: File | null }>({
     brands: null,
@@ -56,6 +62,34 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
     () => (preview?.errors ? groupErrors(preview.errors) : {}),
     [preview?.errors]
   );
+
+  const dateFormatter = useMemo(() => {
+    const options = locale.startsWith("vi")
+      ? { day: "2-digit", month: "2-digit", year: "numeric" }
+      : { day: "numeric", month: "short", year: "numeric" };
+    return new Intl.DateTimeFormat(locale, options);
+  }, [locale]);
+
+  const formatDate = (value?: string | number | null) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return dateFormatter.format(date);
+  };
+
+  const formatErrorMessage = (errorItem: ImportError) => {
+    const field = errorItem.field ? t(`fields.${errorItem.field}`) : undefined;
+    if (errorItem.messageKey) {
+      return t(errorItem.messageKey, {
+        ...errorItem.messageValues,
+        field
+      });
+    }
+    if (errorItem.message.startsWith("validation.")) {
+      return t(errorItem.message, { field });
+    }
+    return errorItem.message;
+  };
 
   const buildFormData = () => {
     const form = new FormData();
@@ -82,11 +116,19 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
       });
       const data = (await res.json()) as ImportPreview;
       if (!res.ok) {
-        throw new Error(data?.errors?.[0]?.message ?? "Preview failed");
+        const serverError = data?.errors?.[0];
+        if (serverError) {
+          throw new Error(formatErrorMessage(serverError));
+        }
+        throw new Error(
+          typeof (data as { error?: string }).error === "string"
+            ? t((data as { error?: string }).error as string)
+            : t("admin.errors.previewFailed")
+        );
       }
       setPreview(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Preview failed");
+      setError(err instanceof Error ? err.message : t("admin.errors.previewFailed"));
     } finally {
       setLoading(false);
     }
@@ -105,11 +147,19 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
       });
       const data = (await res.json()) as ImportPreview;
       if (!res.ok) {
-        throw new Error(data?.errors?.[0]?.message ?? "Import failed");
+        const serverError = data?.errors?.[0];
+        if (serverError) {
+          throw new Error(formatErrorMessage(serverError));
+        }
+        throw new Error(
+          typeof (data as { error?: string }).error === "string"
+            ? t((data as { error?: string }).error as string)
+            : t("admin.errors.importFailed")
+        );
       }
       setPreview(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
+      setError(err instanceof Error ? err.message : t("admin.errors.importFailed"));
     } finally {
       setLoading(false);
     }
@@ -118,14 +168,13 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Upload data</h2>
+        <h2 className="text-lg font-semibold">{t("admin.upload.title")}</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Upload one Excel file with sheets named brands, colors, components, or
-          upload three CSV files named brands.csv, colors.csv, components.csv.
+          {t("admin.upload.description")}
         </p>
         <div className="mt-4 grid gap-6 md:grid-cols-2">
           <div className="space-y-3 rounded-xl border border-dashed border-slate-200 p-4">
-            <p className="text-sm font-semibold">Excel</p>
+            <p className="text-sm font-semibold">{t("admin.upload.excel")}</p>
             <input
               type="file"
               accept=".xlsx"
@@ -138,14 +187,16 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
               }}
             />
             {excelFile && (
-              <p className="text-xs text-slate-500">Selected: {excelFile.name}</p>
+              <p className="text-xs text-slate-500">
+                {t("admin.upload.selectedFile", { name: excelFile.name })}
+              </p>
             )}
           </div>
           <div className="space-y-3 rounded-xl border border-dashed border-slate-200 p-4">
-            <p className="text-sm font-semibold">CSV</p>
+            <p className="text-sm font-semibold">{t("admin.upload.csv")}</p>
             {(["brands", "colors", "components"] as const).map((key) => (
               <label key={key} className="block text-xs text-slate-500">
-                {key}.csv
+                {t(`admin.upload.csvFiles.${key}`)}
                 <input
                   type="file"
                   accept=".csv"
@@ -174,7 +225,7 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
             disabled={!canPreview || loading}
             className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            {loading ? "Working..." : "Preview"}
+            {loading ? t("common.working") : t("common.preview")}
           </button>
           <button
             type="button"
@@ -182,34 +233,40 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
             disabled={!preview || preview.blocked || loading}
             className="rounded-xl border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:text-slate-300"
           >
-            Import
+            {t("common.import")}
           </button>
         </div>
         {hasCsv && !canPreview && (
           <p className="mt-2 text-xs text-slate-500">
-            Upload all three CSV files to enable preview.
+            {t("admin.upload.csvHint")}
           </p>
         )}
       </div>
       {preview && (
         <div className="space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <h3 className="text-base font-semibold">Preview</h3>
+            <h3 className="text-base font-semibold">{t("common.preview")}</h3>
             <div className="mt-3 grid gap-4 text-sm text-slate-600 md:grid-cols-3">
               <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs uppercase text-slate-400">Brands</p>
+                <p className="text-xs uppercase text-slate-400">
+                  {t("tables.brands")}
+                </p>
                 <p className="text-lg font-semibold text-slate-800">
                   {preview.data.brands.length}
                 </p>
               </div>
               <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs uppercase text-slate-400">Colors</p>
+                <p className="text-xs uppercase text-slate-400">
+                  {t("tables.colors")}
+                </p>
                 <p className="text-lg font-semibold text-slate-800">
                   {preview.data.colors.length}
                 </p>
               </div>
               <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs uppercase text-slate-400">Components</p>
+                <p className="text-xs uppercase text-slate-400">
+                  {t("tables.components")}
+                </p>
                 <p className="text-lg font-semibold text-slate-800">
                   {preview.data.components.length}
                 </p>
@@ -217,49 +274,89 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
             </div>
             {preview.blocked && (
               <div className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                Fix validation errors before importing.
+                {t("admin.preview.blocked")}
               </div>
             )}
             {preview.result && (
               <div className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                Import completed: {preview.result.brands} brands, {preview.result.colors} colors,
-                {preview.result.components} components.
+                {t("admin.preview.completed", {
+                  brands: preview.result.brands,
+                  colors: preview.result.colors,
+                  components: preview.result.components
+                })}
               </div>
             )}
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             {(["brands", "colors", "components"] as const).map((table) => (
               <div key={table} className="rounded-2xl border border-slate-200 bg-white p-4">
-                <h4 className="text-sm font-semibold text-slate-700">{table}</h4>
+                <h4 className="text-sm font-semibold text-slate-700">
+                  {t(`tables.${table}`)}
+                </h4>
                 <div className="mt-3 space-y-2 text-xs text-slate-500">
-                  {preview.samples[table].length === 0 && <p>No rows.</p>}
-                  {preview.samples[table].map((row, index) => (
-                    <pre
-                      key={index}
-                      className="overflow-x-auto rounded-lg bg-slate-50 p-2"
-                    >
-                      {JSON.stringify(row, null, 2)}
-                    </pre>
-                  ))}
+                  {preview.samples[table].length === 0 && (
+                    <p>{t("admin.preview.noRows")}</p>
+                  )}
+                  {preview.samples[table].map((row, index) =>
+                    table === "colors" ? (
+                      <div
+                        key={index}
+                        className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600"
+                      >
+                        <div className="font-semibold text-slate-700">
+                          {String(row.code ?? "")} {String(row.name ?? "")}
+                        </div>
+                        <div>
+                          {t("fields.brandSlug")}: {String(row.brandSlug ?? "")}
+                        </div>
+                        <div>
+                          {t("fields.variant")}: {t(`variant.${row.variant as string}`)}
+                        </div>
+                        <div>
+                          {t("color.productionDate.label")}:{" "}
+                          {formatDate(row.productionDate as string)}
+                        </div>
+                        {row.notes && (
+                          <div>
+                            {t("fields.notes")}: {row.notes}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <pre
+                        key={index}
+                        className="overflow-x-auto rounded-lg bg-slate-50 p-2"
+                      >
+                        {JSON.stringify(row, null, 2)}
+                      </pre>
+                    )
+                  )}
                 </div>
               </div>
             ))}
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <h4 className="text-sm font-semibold text-slate-700">Errors</h4>
+            <h4 className="text-sm font-semibold text-slate-700">
+              {t("admin.errors.title")}
+            </h4>
             {preview.errors.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">No errors found.</p>
+              <p className="mt-2 text-sm text-slate-500">
+                {t("admin.errors.none")}
+              </p>
             ) : (
               <div className="mt-3 space-y-4">
                 {Object.entries(errorsByTable).map(([table, errors]) => (
                   <div key={table}>
                     <p className="text-xs font-semibold uppercase text-slate-400">
-                      {table}
+                      {t(`tables.${table as "brands" | "colors" | "components"}`)}
                     </p>
                     <ul className="mt-2 space-y-1 text-sm text-red-600">
                       {errors.map((errorItem, index) => (
                         <li key={`${table}-${index}`}>
-                          Row {errorItem.row}: {errorItem.message}
+                          {t("admin.errors.row", {
+                            row: errorItem.row,
+                            message: formatErrorMessage(errorItem)
+                          })}
                         </li>
                       ))}
                     </ul>
