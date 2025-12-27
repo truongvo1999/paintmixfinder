@@ -53,6 +53,7 @@ export async function GET(
       code: color.code,
       name: color.name,
       variant: color.variant,
+      productionDate: color.productionDate.toISOString(),
       notes: color.notes,
       brand: color.brand
     },

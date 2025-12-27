@@ -1,0 +1,140 @@
+{
+  "app": {
+    "title": "Paint Mix Finder"
+  },
+  "common": {
+    "language": "Ngôn ngữ",
+    "languageOptions": {
+      "en": "Tiếng Anh",
+      "vi": "Tiếng Việt"
+    },
+    "view": "Xem",
+    "preview": "Xem trước",
+    "import": "Nhập",
+    "working": "Đang xử lý..."
+  },
+  "search": {
+    "brandLabel": "Hãng/hệ sơn",
+    "allBrands": "Tất cả hãng",
+    "label": "Tìm màu",
+    "placeholder": "Nhập mã màu hoặc tên",
+    "results": "Kết quả",
+    "noResults": "Không tìm thấy màu.",
+    "empty": "Kết quả tìm kiếm sẽ hiển thị ở đây."
+  },
+  "color": {
+    "selected": {
+      "label": "Màu đã chọn"
+    },
+    "variant": {
+      "label": "Biến thể"
+    },
+    "notes": {
+      "label": "Ghi chú"
+    },
+    "productionDate": {
+      "label": "Ngày sản xuất"
+    }
+  },
+  "formula": {
+    "totalGrams": {
+      "label": "Tổng gram"
+    },
+    "error": "Không thể tải công thức.",
+    "copy": "Sao chép công thức",
+    "export": "Xuất CSV",
+    "empty": "Chọn màu để xem công thức.",
+    "totalLine": "Tổng: {value}g",
+    "table": {
+      "toner": "Mực",
+      "parts": "Phần",
+      "percent": "Phần trăm",
+      "grams": "Gram"
+    },
+    "csvHeaders": {
+      "tonerCode": "Mã mực",
+      "tonerName": "Tên mực",
+      "parts": "Phần",
+      "percent": "Phần trăm",
+      "grams": "Gram"
+    }
+  },
+  "variant": {
+    "V1": "Màu Ngoài",
+    "V2": "Màu Lót"
+  },
+  "tables": {
+    "brands": "Hãng",
+    "colors": "Màu",
+    "components": "Thành phần"
+  },
+  "fields": {
+    "brandSlug": "Mã hãng",
+    "code": "Mã",
+    "name": "Tên",
+    "variant": "Biến thể",
+    "productionDate": "Ngày sản xuất",
+    "notes": "Ghi chú",
+    "colorCode": "Mã màu",
+    "colorVariant": "Biến thể màu",
+    "tonerCode": "Mã mực",
+    "tonerName": "Tên mực",
+    "parts": "Phần"
+  },
+  "validation": {
+    "required": "{field} là bắt buộc.",
+    "variant": {
+      "invalid": "{field} phải là V1 hoặc V2."
+    },
+    "parts": {
+      "positive": "{field} phải là số dương."
+    },
+    "productionDate": {
+      "invalid": "{field} phải là ngày ISO hợp lệ.",
+      "future": "{field} không được ở tương lai."
+    }
+  },
+  "import": {
+    "missingColumns": "Thiếu cột: {columns}",
+    "missingSheet": "Thiếu sheet: {sheet}",
+    "unknownBrand": "Không tìm thấy brandSlug: {brandSlug}",
+    "unknownColorReference": "Không tìm thấy màu: {colorCode} ({colorVariant})"
+  },
+  "admin": {
+    "title": "Nhập dữ liệu",
+    "subtitle": "Kiểm tra và nhập dữ liệu hãng sơn, màu sơn và công thức.",
+    "unauthorized": {
+      "title": "Không có quyền",
+      "message": "Cung cấp khóa admin hợp lệ để truy cập trang này."
+    },
+    "upload": {
+      "title": "Tải dữ liệu",
+      "description": "Tải một tệp Excel với sheet tên brands, colors, components hoặc tải ba tệp CSV tên brands.csv, colors.csv, components.csv.",
+      "excel": "Excel",
+      "csv": "CSV",
+      "selectedFile": "Đã chọn: {name}",
+      "csvFiles": {
+        "brands": "brands.csv",
+        "colors": "colors.csv",
+        "components": "components.csv"
+      },
+      "csvHint": "Tải đủ ba tệp CSV để bật xem trước."
+    },
+    "preview": {
+      "blocked": "Hãy sửa lỗi xác thực trước khi nhập.",
+      "completed": "Nhập xong: {brands} hãng, {colors} màu, {components} thành phần.",
+      "noRows": "Không có dòng dữ liệu."
+    },
+    "errors": {
+      "title": "Lỗi",
+      "none": "Không có lỗi.",
+      "row": "Dòng {row}: {message}",
+      "previewFailed": "Xem trước thất bại.",
+      "importFailed": "Nhập thất bại.",
+      "unauthorized": "Không có quyền.",
+      "invalidStep": "Bước nhập không hợp lệ.",
+      "invalidUpload": "Tệp tải lên không hợp lệ.",
+      "missingFiles": "Cần một tệp Excel hoặc ba tệp CSV."
+    }
+  }
+}
