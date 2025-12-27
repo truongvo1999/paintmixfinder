@@ -44,12 +44,11 @@ export async function GET(request: Request) {
         { name: { contains: query } }
       ]
     },
-    take: 50,
+    take: 200,
     select: {
       id: true,
       code: true,
       name: true,
-      variant: true,
       productionDate: true,
       notes: true,
       brand: {
@@ -57,25 +56,94 @@ export async function GET(request: Request) {
           slug: true,
           name: true
         }
+      },
+      components: {
+        select: {
+          variant: true,
+          tonerCode: true,
+          tonerName: true,
+          parts: true
+        }
       }
     }
   });
 
-  const results = colors
-    .map((color) => ({
-      ...color,
-      rank: rankColor(query, color.code, color.name)
-    }))
+  const grouped = new Map<
+    string,
+    {
+      id: string;
+      code: string;
+      name: string;
+      productionDate: string | null;
+      notes: string | null;
+      brandSlug: string;
+      brandName: string;
+      rank: number;
+      formulas: Map<
+        string,
+        {
+          variant: "V1" | "V2";
+          components: Array<{
+            tonerCode: string;
+            tonerName: string;
+            parts: number;
+          }>;
+        }
+      >;
+    }
+  >();
+
+  colors.forEach((color) => {
+    const key = `${color.brand.slug}::${color.code}`;
+    const rank = rankColor(query, color.code, color.name);
+    const existing = grouped.get(key);
+    const formulas = existing?.formulas ?? new Map();
+
+    color.components.forEach((component) => {
+      if (!formulas.has(component.variant as "V1" | "V2")) {
+        formulas.set(component.variant as "V1" | "V2", {
+          variant: component.variant as "V1" | "V2",
+          components: []
+        });
+      }
+      formulas.get(component.variant as "V1" | "V2")?.components.push({
+        tonerCode: component.tonerCode,
+        tonerName: component.tonerName,
+        parts: Number(component.parts)
+      });
+    });
+
+    if (!existing || rank < existing.rank) {
+      grouped.set(key, {
+        id: color.id,
+        code: color.code,
+        name: color.name,
+        productionDate: color.productionDate
+          ? color.productionDate.toISOString()
+          : null,
+        notes: color.notes,
+        brandSlug: color.brand.slug,
+        brandName: color.brand.name,
+        rank,
+        formulas
+      });
+      return;
+    }
+
+    existing.formulas = formulas;
+  });
+
+  const results = Array.from(grouped.values())
     .sort((a, b) => {
       if (a.rank !== b.rank) return a.rank - b.rank;
       return a.code.localeCompare(b.code);
     })
     .slice(0, 20)
-    .map(({ rank, brand, ...color }) => ({
+    .map(({ rank, formulas, ...color }) => ({
       ...color,
-      productionDate: color.productionDate.toISOString(),
-      brandSlug: brand.slug,
-      brandName: brand.name
+      formulas: Array.from(formulas.values()).sort((a, b) =>
+        a.variant.localeCompare(b.variant)
+      )
     }));
 
   return Response.json({ results });

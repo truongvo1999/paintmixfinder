@@ -5,7 +5,8 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 
 const querySchema = z.object({
-  totalGrams: z.coerce.number().min(1).max(50000)
+  totalGrams: z.coerce.number().min(1).max(50000),
+  variant: z.enum(["V1", "V2"]).optional()
 });
 
 export async function GET(
@@ -20,7 +21,8 @@ export async function GET(
 
   const { searchParams } = new URL(request.url);
   const parseResult = querySchema.safeParse({
-    totalGrams: searchParams.get("totalGrams")
+    totalGrams: searchParams.get("totalGrams"),
+    variant: searchParams.get("variant")
   });
 
   if (!parseResult.success) {
@@ -32,18 +34,31 @@ export async function GET(
 
   const color = await prisma.color.findUnique({
     where: { id: resolvedParams.id },
-    include: { components: true, brand: true }
+    include: { brand: true }
   });
 
   if (!color) {
     return Response.json({ error: "Color not found" }, { status: 404 });
   }
 
-  const components = color.components.map((component) => ({
-    tonerCode: component.tonerCode,
-    tonerName: component.tonerName,
-    parts: Number(component.parts)
-  }));
+  const allComponents = await prisma.formulaComponent.findMany({
+    where: { colorId: color.id }
+  });
+
+  const variants = Array.from(new Set(allComponents.map((item) => item.variant)));
+  const defaultVariant = variants.includes("V1") ? "V1" : variants[0];
+  const selectedVariant =
+    parseResult.data.variant && variants.includes(parseResult.data.variant)
+      ? parseResult.data.variant
+      : defaultVariant;
+
+  const components = allComponents
+    .filter((component) => component.variant === selectedVariant)
+    .map((component) => ({
+      tonerCode: component.tonerCode,
+      tonerName: component.tonerName,
+      parts: Number(component.parts)
+    }));
 
   const formula = computeFormula(components, parseResult.data.totalGrams);
 
@@ -52,11 +67,13 @@ export async function GET(
       id: color.id,
       code: color.code,
       name: color.name,
-      variant: color.variant,
-      productionDate: color.productionDate.toISOString(),
+      productionDate: color.productionDate
+        ? color.productionDate.toISOString()
+        : null,
       notes: color.notes,
       brand: color.brand
     },
+    variant: selectedVariant ?? null,
     totalGrams: parseResult.data.totalGrams,
     totalParts: formula.totalParts,
     components: formula.items
