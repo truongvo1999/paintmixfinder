@@ -1,7 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type ImportStep = "brands" | "colors" | "components";
 
@@ -28,6 +29,17 @@ type ImportPreview = {
   samples: Record<string, string | number | null>[];
   blocked: boolean;
   result?: ImportResult;
+};
+
+type ImportStatus = {
+  brandsDone: boolean;
+  colorsDone: boolean;
+  componentsDone: boolean;
+  counts: {
+    brands: number;
+    colors: number;
+    components: number;
+  };
 };
 
 const steps: { key: ImportStep; order: number }[] = [
@@ -65,35 +77,73 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
     colors: null,
     components: null
   });
-  const [committed, setCommitted] = useState<Record<ImportStep, boolean>>({
-    brands: false,
-    colors: false,
-    components: false
-  });
   const [loadingStep, setLoadingStep] = useState<ImportStep | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [pendingScrollStep, setPendingScrollStep] = useState<ImportStep | null>(null);
+  const stepRefs = useRef<Record<ImportStep, HTMLDivElement | null>>({
+    brands: null,
+    colors: null,
+    components: null
+  });
 
-  const enabledSteps = useMemo(
+  const {
+    data: status,
+    error: statusError,
+    refetch: refetchStatus
+  } = useQuery<ImportStatus>({
+    queryKey: ["admin-import-status", adminKey],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/import/status?key=${adminKey}`);
+      const data = (await res.json()) as ImportStatus | { error?: string };
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string"
+            ? t(data.error)
+            : t("admin.import.statusFailed")
+        );
+      }
+      return data as ImportStatus;
+    },
+    retry: false
+  });
+
+  useEffect(() => {
+    if (statusError) {
+      setMessage(
+        statusError instanceof Error ? statusError.message : t("admin.import.statusFailed")
+      );
+    }
+  }, [statusError, t]);
+
+  const visibleSteps = useMemo(() => {
+    const visible: typeof steps = [steps[0]];
+    if (status?.brandsDone) {
+      visible.push(steps[1]);
+    }
+    if (status?.colorsDone) {
+      visible.push(steps[2]);
+    }
+    return visible;
+  }, [status?.brandsDone, status?.colorsDone]);
+
+  const completed = useMemo(
     () => ({
-      brands: true,
-      colors: committed.brands,
-      components: committed.colors
+      brands: status?.brandsDone ?? false,
+      colors: status?.colorsDone ?? false,
+      components: status?.componentsDone ?? false
     }),
-    [committed.brands, committed.colors]
+    [status?.brandsDone, status?.colorsDone, status?.componentsDone]
   );
+
+  const isStepEnabled = (step: ImportStep) => {
+    if (step === "brands") return true;
+    if (step === "colors") return completed.brands;
+    return completed.colors;
+  };
 
   const handleFileChange = (step: ImportStep, file: File | null) => {
     setFiles((prev) => ({ ...prev, [step]: file }));
     setPreviews((prev) => ({ ...prev, [step]: null }));
-    if (step === "brands") {
-      setCommitted({ brands: false, colors: false, components: false });
-    }
-    if (step === "colors") {
-      setCommitted((prev) => ({ ...prev, colors: false, components: false }));
-    }
-    if (step === "components") {
-      setCommitted((prev) => ({ ...prev, components: false }));
-    }
   };
 
   const runPreview = async (step: ImportStep) => {
@@ -148,12 +198,18 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
         );
       }
       setPreviews((prev) => ({ ...prev, [step]: data }));
-      setCommitted((prev) => ({ ...prev, [step]: true }));
       setMessage(
         t("admin.import.success", {
-          step: t(`admin.import.step.${step}`)
+          step: t(`admin.import.steps.${step}`),
+          created: data.result?.created ?? 0,
+          updated: data.result?.updated ?? 0,
+          skipped: data.result?.skipped ?? 0
         })
       );
+      const nextStep =
+        step === "brands" ? "colors" : step === "colors" ? "components" : null;
+      setPendingScrollStep(nextStep);
+      await refetchStatus();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("admin.import.commitFailed"));
     } finally {
@@ -185,6 +241,17 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
     URL.revokeObjectURL(link.href);
   };
 
+  useEffect(() => {
+    if (!pendingScrollStep) return;
+    const isVisible = visibleSteps.some((step) => step.key === pendingScrollStep);
+    if (!isVisible) return;
+    const target = stepRefs.current[pendingScrollStep];
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setPendingScrollStep(null);
+  }, [pendingScrollStep, visibleSteps]);
+
   return (
     <div className="space-y-6">
       {message && (
@@ -193,19 +260,25 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
         </div>
       )}
       <div className="space-y-6">
-        {steps.map((step) => {
+        {visibleSteps.map((step) => {
           const preview = previews[step.key];
-          const isEnabled = enabledSteps[step.key];
+          const isEnabled = isStepEnabled(step.key);
           const isLoading = loadingStep === step.key;
           return (
-            <div key={step.key} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div
+              key={step.key}
+              ref={(node) => {
+                stepRefs.current[step.key] = node;
+              }}
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase text-slate-400">
                     {t("admin.import.stepLabel", { step: step.order })}
                   </p>
                   <h3 className="text-lg font-semibold">
-                    {t(`admin.import.step.${step.key}`)}
+                    {t(`admin.import.steps.${step.key}`)}
                   </h3>
                   <p className="mt-1 text-sm text-slate-500">
                     {t(`admin.import.stepDescription.${step.key}`)}
@@ -213,14 +286,14 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
                 </div>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    committed[step.key]
+                    completed[step.key]
                       ? "bg-emerald-100 text-emerald-700"
                       : "bg-slate-100 text-slate-600"
                   }`}
                 >
-                  {committed[step.key]
+                  {completed[step.key]
                     ? t("admin.import.status.completed")
-                    : t("admin.import.status.pending")}
+                    : t("admin.import.status.locked")}
                 </span>
               </div>
               <div className="mt-4 space-y-3">
@@ -251,7 +324,7 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
                 <button
                   type="button"
                   onClick={() => runCommit(step.key)}
-                  disabled={!preview || preview.blocked || isLoading}
+                  disabled={!preview || preview.blocked || isLoading || !isEnabled}
                   className="rounded-xl border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:text-slate-300"
                 >
                   {t("admin.import.commit")}

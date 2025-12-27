@@ -42,3 +42,11 @@ model FormulaComponent {
   @@index([colorId, variant])
   @@unique([colorId, variant, tonerCode])
 }
+
+model ImportState {
+  id             String   @id @default("singleton")
+  brandsDone     Boolean  @default(false)
+  colorsDone     Boolean  @default(false)
+  componentsDone Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+}

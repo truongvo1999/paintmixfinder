@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { isAdminAuthorized, unauthorizedResponse } from "@/lib/admin/auth";
 import { parseBrandCsv } from "@/lib/import/stepImport";
+import { setImportState } from "@/lib/import/state";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,8 @@ export async function POST(request: Request) {
 
     return { created, updated, skipped };
   });
+
+  await setImportState(prisma, { brandsDone: true });
 
   return Response.json({ ...preview, blocked: false, result });
 }

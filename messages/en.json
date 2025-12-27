@@ -135,38 +135,46 @@
       "title": "Unauthorized",
       "message": "Provide a valid admin key to access this page."
     },
-    "import": {
-      "stepLabel": "Step {step}",
-      "step": {
-        "brands": "Brands CSV",
-        "colors": "Colors CSV",
-        "components": "Components CSV"
-      },
-      "stepDescription": {
-        "brands": "Import brands first to unlock colors.",
-        "colors": "Import colors after brands are ready.",
-        "components": "Import components after colors are ready."
-      },
-      "status": {
-        "completed": "Completed",
-        "pending": "Pending"
-      },
-      "sequenceHint": "Complete the previous step to unlock this import.",
-      "preview": "Preview",
-      "previewHint": "Showing the first 10 rows.",
-      "commit": "Commit import",
-      "success": "{step} import completed.",
-      "blocked": "Fix validation errors before committing.",
-      "summary": "Created {created}, updated {updated}, skipped {skipped}.",
-      "totalRows": "Total rows",
-      "validRows": "Valid rows",
-      "invalidRows": "Invalid rows",
-      "noRows": "No rows.",
-      "previewFailed": "Preview failed.",
-      "commitFailed": "Import failed.",
-      "errors": {
-        "title": "Errors",
-        "none": "No errors found.",
+  "import": {
+    "stepLabel": "Step {step}",
+    "step": {
+      "brands": "Brands CSV",
+      "colors": "Colors CSV",
+      "components": "Components CSV"
+    },
+    "steps": {
+      "brands": "Brands CSV",
+      "colors": "Colors CSV",
+      "components": "Components CSV"
+    },
+    "stepDescription": {
+      "brands": "Import brands first to unlock colors.",
+      "colors": "Import colors after brands are ready.",
+      "components": "Import components after colors are ready."
+    },
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "locked": "Ready"
+    },
+    "sequenceHint": "Complete the previous step to unlock this import.",
+    "preview": "Preview",
+    "previewHint": "Showing the first 10 rows.",
+    "commit": "Commit import",
+    "success": "{step} import completed. Created {created}, updated {updated}, skipped {skipped}.",
+    "blocked": "Fix validation errors before committing.",
+    "summary": "Created {created}, updated {updated}, skipped {skipped}.",
+    "totalRows": "Total rows",
+    "validRows": "Valid rows",
+    "invalidRows": "Invalid rows",
+    "noRows": "No rows.",
+    "previewFailed": "Preview failed.",
+    "commitFailed": "Import failed.",
+    "statusFailed": "Unable to load import status.",
+    "locked": "Complete the previous step before continuing.",
+    "errors": {
+      "title": "Errors",
+      "none": "No errors found.",
         "row": "Row {row}: {message}",
         "download": "Download error report"
       }
