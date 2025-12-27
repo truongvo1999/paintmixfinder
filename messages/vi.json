@@ -26,6 +26,9 @@
     "selected": {
       "label": "Màu đã chọn"
     },
+    "car": {
+      "label": "Dòng xe"
+    },
     "variant": {
       "label": "Biến thể"
     },
@@ -75,6 +78,7 @@
     "variant": "Biến thể",
     "productionDate": "Ngày sản xuất",
     "notes": "Ghi chú",
+    "colorCar": "Dòng xe",
     "colorCode": "Mã màu",
     "tonerCode": "Mã mực",
     "tonerName": "Tên mực",
@@ -91,6 +95,10 @@
     "productionDate": {
       "invalid": "{field} phải là ngày ISO hợp lệ.",
       "future": "{field} không được ở tương lai."
+    },
+    "colorCar": {
+      "invalid": "{field} phải là chuỗi.",
+      "tooLong": "{field} tối đa 100 ký tự."
     }
   },
   "import": {

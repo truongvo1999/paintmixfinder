@@ -87,6 +87,7 @@ export async function POST(request: Request) {
         },
         update: {
           name: color.name,
+          colorCar: color.colorCar,
           notes: color.notes,
           productionDate: color.productionDate
         },
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
           brandId,
           code: color.code,
           name: color.name,
+          colorCar: color.colorCar,
           productionDate: color.productionDate,
           notes: color.notes
         }
