@@ -1,18 +1,58 @@
 import { z } from "zod";
 
 export const brandRowSchema = z.object({
-  slug: z.string().min(1),
-  name: z.string().min(1)
+  slug: z.string().min(1, { message: "validation.required" }),
+  name: z.string().min(1, { message: "validation.required" })
 });
 
+const colorVariantSchema = z.preprocess(
+  (value) =>
+    typeof value === "string" ? value.trim().toUpperCase() : value,
+  z
+    .string({
+      required_error: "validation.required",
+      invalid_type_error: "validation.variant.invalid"
+    })
+    .min(1, { message: "validation.required" })
+    .refine((value) => value === "V1" || value === "V2", {
+      message: "validation.variant.invalid"
+    })
+);
+
+const parseProductionDate = (value: unknown) => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(trimmed);
+    const date = new Date(isDateOnly ? `${trimmed}T00:00:00Z` : trimmed);
+    if (!Number.isNaN(date.getTime())) {
+      return date;
+    }
+  }
+  return undefined;
+};
+
+const productionDateSchema = z.preprocess(
+  parseProductionDate,
+  z
+    .date({
+      required_error: "validation.productionDate.invalid",
+      invalid_type_error: "validation.productionDate.invalid"
+    })
+    .refine((date) => date.getTime() <= Date.now(), {
+      message: "validation.productionDate.future"
+    })
+);
+
 export const colorRowSchema = z.object({
-  brandSlug: z.string().min(1),
-  code: z.string().min(1),
-  name: z.string().min(1),
-  variant: z.string().optional().nullable().transform((value) => {
-    const trimmed = value?.toString().trim();
-    return trimmed ? trimmed : null;
-  }),
+  brandSlug: z.string().min(1, { message: "validation.required" }),
+  code: z.string().min(1, { message: "validation.required" }),
+  name: z.string().min(1, { message: "validation.required" }),
+  variant: colorVariantSchema,
+  productionDate: productionDateSchema,
   notes: z.string().optional().nullable().transform((value) => {
     const trimmed = value?.toString().trim();
     return trimmed ? trimmed : null;
@@ -20,15 +60,12 @@ export const colorRowSchema = z.object({
 });
 
 export const componentRowSchema = z.object({
-  brandSlug: z.string().min(1),
-  colorCode: z.string().min(1),
-  colorVariant: z.string().optional().nullable().transform((value) => {
-    const trimmed = value?.toString().trim();
-    return trimmed ? trimmed : null;
-  }),
-  tonerCode: z.string().min(1),
-  tonerName: z.string().min(1),
-  parts: z.coerce.number().positive()
+  brandSlug: z.string().min(1, { message: "validation.required" }),
+  colorCode: z.string().min(1, { message: "validation.required" }),
+  colorVariant: colorVariantSchema,
+  tonerCode: z.string().min(1, { message: "validation.required" }),
+  tonerName: z.string().min(1, { message: "validation.required" }),
+  parts: z.coerce.number().positive({ message: "validation.parts.positive" })
 });
 
 export type BrandRow = z.infer<typeof brandRowSchema>;

@@ -13,6 +13,9 @@ export type ImportError = {
   table: "brands" | "colors" | "components";
   row: number;
   message: string;
+  field?: string;
+  messageKey?: string;
+  messageValues?: Record<string, string | number>;
 };
 
 export type ImportData = {
@@ -33,7 +36,7 @@ export type ImportPreview = {
 
 const expectedColumns = {
   brands: ["slug", "name"],
-  colors: ["brandSlug", "code", "name", "variant", "notes"],
+  colors: ["brandSlug", "code", "name", "variant", "productionDate", "notes"],
   components: [
     "brandSlug",
     "colorCode",
@@ -59,7 +62,9 @@ const parseTable = <T>(
     errors.push({
       table,
       row: 0,
-      message: `Missing columns: ${missingColumns.join(", ")}`
+      message: `Missing columns: ${missingColumns.join(", ")}`,
+      messageKey: "import.missingColumns",
+      messageValues: { columns: missingColumns.join(", ") }
     });
   }
 
@@ -76,7 +81,8 @@ const parseTable = <T>(
         errors.push({
           table,
           row: rowNumber,
-          message: issue.message
+          message: issue.message,
+          field: issue.path[0]?.toString()
         });
       });
       return;
@@ -115,7 +121,9 @@ const parseExcel = async (file: File) => {
       sheetErrors: missingSheets.map((name) => ({
         table: name as "brands" | "colors" | "components",
         row: 0,
-        message: `Missing sheet: ${name}`
+        message: `Missing sheet: ${name}`,
+        messageKey: "import.missingSheet",
+        messageValues: { sheet: name }
       }))
     };
   }
@@ -164,7 +172,7 @@ export const parseImportFiles = async (files: {
       components: await parseCsvFile(files.components)
     };
   } else {
-    throw new Error("Provide either one Excel file or three CSV files.");
+    throw new Error("admin.errors.missingFiles");
   }
 
   const brandResult = parseTable<BrandRow>(rows.brands, "brands", brandRowSchema);
@@ -208,7 +216,7 @@ const validateCrossReferences = (data: ImportData) => {
   const brandSet = new Set(data.brands.map((brand) => brand.slug));
   const colorKeys = new Set(
     data.colors.map((color) =>
-      [color.brandSlug, color.code, color.variant ?? ""].join("::")
+      [color.brandSlug, color.code, color.variant].join("::")
     )
   );
 
@@ -217,7 +225,9 @@ const validateCrossReferences = (data: ImportData) => {
       errors.push({
         table: "colors",
         row: index + 2,
-        message: `Unknown brandSlug: ${color.brandSlug}`
+        message: `Unknown brandSlug: ${color.brandSlug}`,
+        messageKey: "import.unknownBrand",
+        messageValues: { brandSlug: color.brandSlug }
       });
     }
   });
@@ -227,20 +237,27 @@ const validateCrossReferences = (data: ImportData) => {
       errors.push({
         table: "components",
         row: index + 2,
-        message: `Unknown brandSlug: ${component.brandSlug}`
+        message: `Unknown brandSlug: ${component.brandSlug}`,
+        messageKey: "import.unknownBrand",
+        messageValues: { brandSlug: component.brandSlug }
       });
       return;
     }
     const key = [
       component.brandSlug,
       component.colorCode,
-      component.colorVariant ?? ""
+      component.colorVariant
     ].join("::");
     if (!colorKeys.has(key)) {
       errors.push({
         table: "components",
         row: index + 2,
-        message: `Unknown color reference: ${component.colorCode}`
+        message: `Unknown color reference: ${component.colorCode}`,
+        messageKey: "import.unknownColorReference",
+        messageValues: {
+          colorCode: component.colorCode,
+          colorVariant: component.colorVariant
+        }
       });
     }
   });

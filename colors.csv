@@ -1,13 +1,5 @@
-brandSlug,code,name,variant,notes
-debeer,B123,Candy Red,V1,Metallic finish
-debeer,B124,Pearl White,,High opacity
-debeer,B200,Graphite Gray,,Fine flake
-sentara,S210,Deep Blue,,Solid color
-sentara,S211,Sunset Orange,,Warm tone
-sentara,S215,Emerald Green,V2,High chroma
-cpp,C310,Arctic Silver,,Cool metallic
-cpp,C311,Desert Tan,,Smooth coverage
-cpp,C320,Midnight Black,V1,Low gloss
-feargus,F410,Storm Gray,,Neutral base
-feargus,F411,Ruby Red,V2,High depth
-feargus,F420,Ocean Teal,,Semi-gloss
+brandSlug,code,name,variant,productionDate,notes
+debeer,B123,Candy Red,V1,2024-01-15,Metallic finish
+debeer,B124,Pearl White,V2,2024-01-20,High opacity
+debeer,B200,Graphite Gray,V1,2024-02-05,Fine flake
+sentara,S210,Deep Blue,V1,2024-02-12,Solid color

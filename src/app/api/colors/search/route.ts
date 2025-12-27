@@ -50,6 +50,7 @@ export async function GET(request: Request) {
       code: true,
       name: true,
       variant: true,
+      productionDate: true,
       notes: true,
       brand: {
         select: {
@@ -72,6 +73,7 @@ export async function GET(request: Request) {
     .slice(0, 20)
     .map(({ rank, brand, ...color }) => ({
       ...color,
+      productionDate: color.productionDate.toISOString(),
       brandSlug: brand.slug,
       brandName: brand.name
     }));
