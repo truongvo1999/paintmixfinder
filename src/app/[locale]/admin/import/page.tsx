@@ -5,9 +5,9 @@ import { getTranslations } from "next-intl/server";
 export default async function AdminImportPage({
   searchParams
 }: {
-  searchParams: { key?: string };
+  searchParams: Promise<{ key?: string }>;
 }) {
-  const { key } = searchParams;
+  const { key } = await searchParams;
   const t = await getTranslations();
   const adminKey = process.env.ADMIN_IMPORT_KEY;
   if (!adminKey || key !== adminKey) {
