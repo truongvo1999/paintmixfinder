@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { isAdminAuthorized, unauthorizedResponse } from "@/lib/admin/auth";
 import { parseComponentCsv, type ImportError } from "@/lib/import/stepImport";
+import { getImportStatus, setImportState } from "@/lib/import/state";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,11 @@ const buildPreview = (
 export async function POST(request: Request) {
   if (!isAdminAuthorized(request)) {
     return unauthorizedResponse();
+  }
+
+  const status = await getImportStatus(prisma);
+  if (!status.colorsDone) {
+    return Response.json({ error: "admin.import.locked" }, { status: 400 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -160,6 +166,8 @@ export async function POST(request: Request) {
 
     return { created, updated, skipped };
   });
+
+  await setImportState(prisma, { componentsDone: true });
 
   return Response.json({ ...preview, blocked: false, result });
 }

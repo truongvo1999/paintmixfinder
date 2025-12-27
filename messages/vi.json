@@ -135,38 +135,46 @@
       "title": "Không có quyền",
       "message": "Cung cấp khóa admin hợp lệ để truy cập trang này."
     },
-    "import": {
-      "stepLabel": "Bước {step}",
-      "step": {
-        "brands": "CSV Hãng",
-        "colors": "CSV Màu",
-        "components": "CSV Thành phần"
-      },
-      "stepDescription": {
-        "brands": "Nhập hãng trước để mở khóa màu.",
-        "colors": "Nhập màu sau khi đã có hãng.",
-        "components": "Nhập thành phần sau khi đã có màu."
-      },
-      "status": {
-        "completed": "Đã xong",
-        "pending": "Chưa xong"
-      },
-      "sequenceHint": "Hoàn thành bước trước để mở khóa bước này.",
-      "preview": "Xem trước",
-      "previewHint": "Hiển thị 10 dòng đầu tiên.",
-      "commit": "Xác nhận nhập",
-      "success": "Đã nhập {step}.",
-      "blocked": "Hãy sửa lỗi xác thực trước khi nhập.",
-      "summary": "Tạo {created}, cập nhật {updated}, bỏ qua {skipped}.",
-      "totalRows": "Tổng số dòng",
-      "validRows": "Dòng hợp lệ",
-      "invalidRows": "Dòng lỗi",
-      "noRows": "Không có dòng dữ liệu.",
-      "previewFailed": "Xem trước thất bại.",
-      "commitFailed": "Nhập thất bại.",
-      "errors": {
-        "title": "Lỗi",
-        "none": "Không có lỗi.",
+  "import": {
+    "stepLabel": "Bước {step}",
+    "step": {
+      "brands": "CSV Hãng",
+      "colors": "CSV Màu",
+      "components": "CSV Thành phần"
+    },
+    "steps": {
+      "brands": "CSV Hãng",
+      "colors": "CSV Màu",
+      "components": "CSV Thành phần"
+    },
+    "stepDescription": {
+      "brands": "Nhập hãng trước để mở khóa màu.",
+      "colors": "Nhập màu sau khi đã có hãng.",
+      "components": "Nhập thành phần sau khi đã có màu."
+    },
+    "status": {
+      "completed": "Đã xong",
+      "pending": "Chưa xong",
+      "locked": "Sẵn sàng"
+    },
+    "sequenceHint": "Hoàn thành bước trước để mở khóa bước này.",
+    "preview": "Xem trước",
+    "previewHint": "Hiển thị 10 dòng đầu tiên.",
+    "commit": "Xác nhận nhập",
+    "success": "Đã nhập {step}. Tạo {created}, cập nhật {updated}, bỏ qua {skipped}.",
+    "blocked": "Hãy sửa lỗi xác thực trước khi nhập.",
+    "summary": "Tạo {created}, cập nhật {updated}, bỏ qua {skipped}.",
+    "totalRows": "Tổng số dòng",
+    "validRows": "Dòng hợp lệ",
+    "invalidRows": "Dòng lỗi",
+    "noRows": "Không có dòng dữ liệu.",
+    "previewFailed": "Xem trước thất bại.",
+    "commitFailed": "Nhập thất bại.",
+    "statusFailed": "Không thể tải trạng thái nhập dữ liệu.",
+    "locked": "Hoàn thành bước trước khi tiếp tục.",
+    "errors": {
+      "title": "Lỗi",
+      "none": "Không có lỗi.",
         "row": "Dòng {row}: {message}",
         "download": "Tải báo cáo lỗi"
       }
