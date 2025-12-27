@@ -15,9 +15,10 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("query")?.trim() ?? "";
+  const query =
+    searchParams.get("q")?.trim() ?? searchParams.get("query")?.trim() ?? "";
   const page = parsePagination(searchParams.get("page"), 1);
-  const pageSize = parsePagination(searchParams.get("pageSize"), 10);
+  const pageSize = parsePagination(searchParams.get("pageSize"), 25);
   const sort = searchParams.get("sort") ?? "name";
   const direction = searchParams.get("dir") === "desc" ? "desc" : "asc";
   const skip = (page - 1) * pageSize;
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
     prisma.brand.count({ where })
   ]);
 
-  return Response.json({ data, total, page, pageSize });
+  return Response.json({ items: data, totalCount: total, page, pageSize });
 }
 
 export async function POST(request: Request) {

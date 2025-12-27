@@ -76,6 +76,7 @@
     "add": "Thêm",
     "edit": "Sửa",
     "delete": "Xóa",
+    "deleteSelected": "Xóa đã chọn",
     "save": "Lưu",
     "cancel": "Hủy",
     "confirm": "Xác nhận",
@@ -83,6 +84,23 @@
     "prev": "Trước",
     "next": "Sau",
     "actions": "Thao tác"
+  },
+  "table": {
+    "selectAll": "Chọn tất cả",
+    "selectRow": "Chọn dòng",
+    "selectedCount": "Đã chọn: {count}"
+  },
+  "pagination": {
+    "next": "Sau",
+    "prev": "Trước",
+    "page": "Trang {page} / {totalPages}",
+    "pageSize": "Số dòng mỗi trang"
+  },
+  "messages": {
+    "deleteSuccess": "Đã xóa {count} mục.",
+    "deleteBlocked": "Không thể xóa các mục đã chọn. {reason}",
+    "loading": "Đang tải...",
+    "noData": "Không có dữ liệu."
   },
   "fields": {
     "brandSlug": "Mã hãng",

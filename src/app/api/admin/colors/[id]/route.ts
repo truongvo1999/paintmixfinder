@@ -96,7 +96,7 @@ export async function DELETE(
   if (existing._count.components > 0) {
     return Response.json(
       { error: "admin.errors.colorHasComponents" },
-      { status: 400 }
+      { status: 409 }
     );
   }
 
