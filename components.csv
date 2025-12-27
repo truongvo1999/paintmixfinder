@@ -43,6 +43,11 @@ cpp,C320,V1,T-102,Carbon Black,120
 cpp,C320,V1,T-010,Ice White,180
 cpp,C320,V1,T-220,Azure Blue,12
 cpp,C320,V1,T-330,Red Oxide,8
+cpp,RECVF3,V1,P951,P951,10.00
+cpp,RECVF3,V2,P150,P150,702.00
+cpp,RECVF3,V2,P61,P61,102.60
+cpp,RECVF3,V2,P4530,P4530,65.20
+cpp,RECVF3,V2,P72,P72,63.70
 feargus,F410,V1,T-101,Jet Black,40
 feargus,F410,V1,T-010,Bright White,160
 feargus,F410,V1,T-220,Azure Blue,18
