@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { parseImportFiles } from "@/lib/import/parsers";
+import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const brandMap = new Map<string, string>();
     for (const brand of preview.data.brands) {
       const saved = await tx.brand.upsert({
