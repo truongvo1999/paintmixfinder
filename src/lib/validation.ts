@@ -54,11 +54,30 @@ const productionDateSchema = z.preprocess(
     })
 );
 
+const colorCarSchema = z.preprocess(
+  (value) => {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    if (typeof value === "string" || typeof value === "number") {
+      const trimmed = value.toString().trim();
+      return trimmed ? trimmed : null;
+    }
+    return value;
+  },
+  z
+    .string({ invalid_type_error: "validation.colorCar.invalid" })
+    .max(100, { message: "validation.colorCar.tooLong" })
+    .optional()
+    .nullable()
+);
+
 export const colorRowSchema = z.object({
   brandSlug: z.string().min(1, { message: "validation.required" }),
   code: z.string().min(1, { message: "validation.required" }),
   name: z.string().min(1, { message: "validation.required" }),
   productionDate: productionDateSchema.optional(),
+  colorCar: colorCarSchema,
   notes: z.string().optional().nullable().transform((value) => {
     const trimmed = value?.toString().trim();
     return trimmed ? trimmed : null;

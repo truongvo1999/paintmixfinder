@@ -70,6 +70,7 @@ export async function GET(
       productionDate: color.productionDate
         ? color.productionDate.toISOString()
         : null,
+      colorCar: color.colorCar,
       notes: color.notes,
       brand: color.brand
     },

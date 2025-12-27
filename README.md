@@ -12,7 +12,7 @@ Create a local SQLite database and Prisma client:
 
 ```bash
 npm run prisma:generate
-npm run prisma:migrate -- --name init
+npm run prisma:migrate
 ```
 
 Run the app:
@@ -57,6 +57,7 @@ Upload **exactly three** files:
 - code (string, required)
 - name (string, required)
 - productionDate (string, optional, ISO date)
+- colorCar (string, optional)
 - notes (string, optional)
 
 **components**
@@ -124,3 +125,10 @@ Check:
 - Switching variants updates components and gram calculation.
 - Import works with variant only in `components.csv`.
 - API responses remain language-neutral (variants are not localized).
+
+## Color car brand QA checklist
+
+- Import works with and without `colorCar`.
+- Existing colors without `colorCar` remain valid.
+- API returns `colorCar` as string or null.
+- UI shows `colorCar` only when present.

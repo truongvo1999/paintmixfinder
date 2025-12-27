@@ -315,6 +315,11 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
                             {formatDate(row.productionDate as string)}
                           </div>
                         )}
+                        {row.colorCar && (
+                          <div>
+                            {t("color.car.label")}: {row.colorCar}
+                          </div>
+                        )}
                         {row.notes && (
                           <div>
                             {t("fields.notes")}: {row.notes}
