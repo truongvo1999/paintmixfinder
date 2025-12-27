@@ -11,7 +11,8 @@
     "view": "View",
     "preview": "Preview",
     "import": "Import",
-    "working": "Working..."
+    "working": "Working...",
+    "loading": "Loading..."
   },
   "search": {
     "brandLabel": "Brand/system",
@@ -71,6 +72,18 @@
     "colors": "Colors",
     "components": "Components"
   },
+  "actions": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "prev": "Prev",
+    "next": "Next",
+    "actions": "Actions"
+  },
   "fields": {
     "brandSlug": "Brand slug",
     "code": "Code",
@@ -86,6 +99,10 @@
   },
   "validation": {
     "required": "{field} is required.",
+    "notFound": "{field} not found.",
+    "slug": {
+      "invalid": "{field} must be lowercase and contain only letters, numbers, or dashes."
+    },
     "variant": {
       "invalid": "{field} must be V1 or V2."
     },
@@ -108,40 +125,92 @@
     "unknownColorReference": "Unknown color reference: {colorCode} ({variant})"
   },
   "admin": {
-    "title": "Admin Import",
-    "subtitle": "Validate and import paint brand, color, and formula data.",
+    "title": "Admin",
+    "subtitle": "Manage imports and catalog data.",
+    "tabs": {
+      "import": "Import",
+      "display": "Display"
+    },
     "unauthorized": {
       "title": "Unauthorized",
       "message": "Provide a valid admin key to access this page."
     },
-    "upload": {
-      "title": "Upload data",
-      "description": "Upload one Excel file with sheets named brands, colors, components, or upload three CSV files named brands.csv, colors.csv, components.csv.",
-      "excel": "Excel",
-      "csv": "CSV",
-      "selectedFile": "Selected: {name}",
-      "csvFiles": {
-        "brands": "brands.csv",
-        "colors": "colors.csv",
-        "components": "components.csv"
+    "import": {
+      "stepLabel": "Step {step}",
+      "step": {
+        "brands": "Brands CSV",
+        "colors": "Colors CSV",
+        "components": "Components CSV"
       },
-      "csvHint": "Upload all three CSV files to enable preview."
+      "stepDescription": {
+        "brands": "Import brands first to unlock colors.",
+        "colors": "Import colors after brands are ready.",
+        "components": "Import components after colors are ready."
+      },
+      "status": {
+        "completed": "Completed",
+        "pending": "Pending"
+      },
+      "sequenceHint": "Complete the previous step to unlock this import.",
+      "preview": "Preview",
+      "previewHint": "Showing the first 10 rows.",
+      "commit": "Commit import",
+      "success": "{step} import completed.",
+      "blocked": "Fix validation errors before committing.",
+      "summary": "Created {created}, updated {updated}, skipped {skipped}.",
+      "totalRows": "Total rows",
+      "validRows": "Valid rows",
+      "invalidRows": "Invalid rows",
+      "noRows": "No rows.",
+      "previewFailed": "Preview failed.",
+      "commitFailed": "Import failed.",
+      "errors": {
+        "title": "Errors",
+        "none": "No errors found.",
+        "row": "Row {row}: {message}",
+        "download": "Download error report"
+      }
     },
-    "preview": {
-      "blocked": "Fix validation errors before importing.",
-      "completed": "Import completed: {brands} brands, {colors} colors, {components} components.",
-      "noRows": "No rows."
+    "display": {
+      "brands": "Brands",
+      "colors": "Colors",
+      "components": "Components"
+    },
+    "search": {
+      "brands": "Search slug or name",
+      "colors": "Search code or name",
+      "components": "Search toner or color code"
+    },
+    "pagination": "Page {page} of {totalPages}",
+    "empty": "No data found.",
+    "confirmDelete": {
+      "title": "Confirm delete",
+      "brand": "This brand has no colors. Delete it?",
+      "color": "This color has no components. Delete it?",
+      "component": "Delete this component?"
+    },
+    "autocomplete": {
+      "brand": "Search brand",
+      "color": "Search color code",
+      "selectBrand": "Select a brand first",
+      "toner": "Search toner code"
     },
     "errors": {
-      "title": "Errors",
-      "none": "No errors found.",
-      "row": "Row {row}: {message}",
-      "previewFailed": "Preview failed.",
-      "importFailed": "Import failed.",
-      "unauthorized": "Unauthorized.",
+      "loadFailed": "Failed to load data.",
+      "saveFailed": "Failed to save changes.",
+      "deleteFailed": "Failed to delete item.",
+      "invalidPayload": "Invalid payload.",
+      "duplicateBrand": "Brand slug already exists.",
+      "duplicateColor": "Color code already exists for this brand.",
+      "duplicateComponent": "Component already exists for this color and variant.",
+      "brandHasColors": "Delete colors before deleting this brand.",
+      "colorHasComponents": "Delete components before deleting this color.",
+      "notFound": "Item not found.",
+      "missingFile": "Select a CSV file to import.",
       "invalidStep": "Invalid import step.",
       "invalidUpload": "Invalid upload.",
-      "missingFiles": "Provide either one Excel file or three CSV files."
+      "missingFiles": "Provide a CSV file for each step.",
+      "unauthorized": "Unauthorized."
     }
   }
 }
