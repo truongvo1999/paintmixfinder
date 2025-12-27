@@ -12,7 +12,7 @@ Create a local SQLite database and Prisma client:
 
 ```bash
 npm run prisma:generate
-npm run prisma:migrate -- --name init
+npm run prisma:migrate
 ```
 
 Run the app:
