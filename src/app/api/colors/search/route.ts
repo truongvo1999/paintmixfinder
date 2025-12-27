@@ -50,6 +50,7 @@ export async function GET(request: Request) {
       code: true,
       name: true,
       productionDate: true,
+      colorCar: true,
       notes: true,
       brand: {
         select: {
@@ -75,6 +76,7 @@ export async function GET(request: Request) {
       code: string;
       name: string;
       productionDate: string | null;
+      colorCar: string | null;
       notes: string | null;
       brandSlug: string;
       brandName: string;
@@ -121,6 +123,7 @@ export async function GET(request: Request) {
         productionDate: color.productionDate
           ? color.productionDate.toISOString()
           : null,
+        colorCar: color.colorCar,
         notes: color.notes,
         brandSlug: color.brand.slug,
         brandName: color.brand.name,

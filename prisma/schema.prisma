@@ -21,6 +21,7 @@ model Color {
   name           String
   productionDate DateTime?
   notes          String?
+  colorCar       String?
   brand          Brand              @relation(fields: [brandId], references: [id])
   components     FormulaComponent[]
 
