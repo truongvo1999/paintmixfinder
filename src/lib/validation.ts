@@ -20,7 +20,13 @@ const colorVariantSchema = z.preprocess(
 );
 
 const parseProductionDate = (value: unknown) => {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+  if (value instanceof Date) {
     return value;
   }
   if (typeof value === "string") {
@@ -31,8 +37,9 @@ const parseProductionDate = (value: unknown) => {
     if (!Number.isNaN(date.getTime())) {
       return date;
     }
+    return value;
   }
-  return undefined;
+  return value;
 };
 
 const productionDateSchema = z.preprocess(
@@ -51,8 +58,7 @@ export const colorRowSchema = z.object({
   brandSlug: z.string().min(1, { message: "validation.required" }),
   code: z.string().min(1, { message: "validation.required" }),
   name: z.string().min(1, { message: "validation.required" }),
-  variant: colorVariantSchema,
-  productionDate: productionDateSchema,
+  productionDate: productionDateSchema.optional(),
   notes: z.string().optional().nullable().transform((value) => {
     const trimmed = value?.toString().trim();
     return trimmed ? trimmed : null;
@@ -62,7 +68,7 @@ export const colorRowSchema = z.object({
 export const componentRowSchema = z.object({
   brandSlug: z.string().min(1, { message: "validation.required" }),
   colorCode: z.string().min(1, { message: "validation.required" }),
-  colorVariant: colorVariantSchema,
+  variant: colorVariantSchema,
   tonerCode: z.string().min(1, { message: "validation.required" }),
   tonerName: z.string().min(1, { message: "validation.required" }),
   parts: z.coerce.number().positive({ message: "validation.parts.positive" })

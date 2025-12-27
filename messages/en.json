@@ -76,7 +76,6 @@
     "productionDate": "Production date",
     "notes": "Notes",
     "colorCode": "Color code",
-    "colorVariant": "Color variant",
     "tonerCode": "Toner code",
     "tonerName": "Toner name",
     "parts": "Parts"
@@ -98,7 +97,7 @@
     "missingColumns": "Missing columns: {columns}",
     "missingSheet": "Missing sheet: {sheet}",
     "unknownBrand": "Unknown brandSlug: {brandSlug}",
-    "unknownColorReference": "Unknown color reference: {colorCode} ({colorVariant})"
+    "unknownColorReference": "Unknown color reference: {colorCode} ({variant})"
   },
   "admin": {
     "title": "Admin Import",

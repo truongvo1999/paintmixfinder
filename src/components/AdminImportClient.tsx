@@ -70,7 +70,7 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
     return new Intl.DateTimeFormat(locale, options);
   }, [locale]);
 
-  const formatDate = (value?: string | number | null) => {
+  const formatDate = (value?: string | number | Date | null) => {
     if (!value) return "-";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
@@ -309,13 +309,12 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
                         <div>
                           {t("fields.brandSlug")}: {String(row.brandSlug ?? "")}
                         </div>
-                        <div>
-                          {t("fields.variant")}: {t(`variant.${row.variant as string}`)}
-                        </div>
-                        <div>
-                          {t("color.productionDate.label")}:{" "}
-                          {formatDate(row.productionDate as string)}
-                        </div>
+                        {row.productionDate && (
+                          <div>
+                            {t("color.productionDate.label")}:{" "}
+                            {formatDate(row.productionDate as string)}
+                          </div>
+                        )}
                         {row.notes && (
                           <div>
                             {t("fields.notes")}: {row.notes}

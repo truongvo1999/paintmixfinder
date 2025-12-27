@@ -35,16 +35,25 @@ export type ImportPreview = {
 };
 
 const expectedColumns = {
-  brands: ["slug", "name"],
-  colors: ["brandSlug", "code", "name", "variant", "productionDate", "notes"],
-  components: [
-    "brandSlug",
-    "colorCode",
-    "colorVariant",
-    "tonerCode",
-    "tonerName",
-    "parts"
-  ]
+  brands: {
+    required: ["slug", "name"],
+    optional: []
+  },
+  colors: {
+    required: ["brandSlug", "code", "name"],
+    optional: ["productionDate", "notes"]
+  },
+  components: {
+    required: [
+      "brandSlug",
+      "colorCode",
+      "variant",
+      "tonerCode",
+      "tonerName",
+      "parts"
+    ],
+    optional: []
+  }
 } as const;
 
 const parseTable = <T>(
@@ -54,10 +63,12 @@ const parseTable = <T>(
 ) => {
   const errors: ImportError[] = [];
   const data: T[] = [];
-  const columns = expectedColumns[table];
+  const requiredColumns = expectedColumns[table].required;
+  const optionalColumns = expectedColumns[table].optional;
+  const columns = [...requiredColumns, ...optionalColumns];
   const rowKeys = rows[0] ? Object.keys(rows[0]) : [];
 
-  const missingColumns = columns.filter((col) => !rowKeys.includes(col));
+  const missingColumns = requiredColumns.filter((col) => !rowKeys.includes(col));
   if (missingColumns.length > 0) {
     errors.push({
       table,
@@ -215,9 +226,7 @@ const validateCrossReferences = (data: ImportData) => {
   const errors: ImportError[] = [];
   const brandSet = new Set(data.brands.map((brand) => brand.slug));
   const colorKeys = new Set(
-    data.colors.map((color) =>
-      [color.brandSlug, color.code, color.variant].join("::")
-    )
+    data.colors.map((color) => [color.brandSlug, color.code].join("::"))
   );
 
   data.colors.forEach((color, index) => {
@@ -245,8 +254,7 @@ const validateCrossReferences = (data: ImportData) => {
     }
     const key = [
       component.brandSlug,
-      component.colorCode,
-      component.colorVariant
+      component.colorCode
     ].join("::");
     if (!colorKeys.has(key)) {
       errors.push({
@@ -256,7 +264,7 @@ const validateCrossReferences = (data: ImportData) => {
         messageKey: "import.unknownColorReference",
         messageValues: {
           colorCode: component.colorCode,
-          colorVariant: component.colorVariant
+          variant: component.variant
         }
       });
     }

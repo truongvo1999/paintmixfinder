@@ -27,15 +27,26 @@ type BrandRef = { slug: string; name: string };
 type ColorVariant = "V1" | "V2";
 type Translator = ReturnType<typeof useTranslations>;
 
+type FormulaComponentBase = {
+  tonerCode: string;
+  tonerName: string;
+  parts: number;
+};
+
+type FormulaOption = {
+  variant: ColorVariant;
+  components: FormulaComponentBase[];
+};
+
 type ColorResult = {
   id: string;
   code: string;
   name: string;
-  variant: ColorVariant;
-  productionDate: string;
+  productionDate: string | null;
   notes: string | null;
   brandSlug: string;
   brandName: string;
+  formulas: FormulaOption[];
 };
 
 type FormulaComponent = {
@@ -51,11 +62,11 @@ type FormulaResponse = {
     id: string;
     code: string;
     name: string;
-    variant: ColorVariant;
-    productionDate: string;
+    productionDate: string | null;
     notes: string | null;
     brand: Brand;
   };
+  variant: ColorVariant | null;
   totalGrams: number;
   totalParts: number;
   components: FormulaComponent[];
@@ -111,8 +122,7 @@ const useRecentColors = (color: ColorResult | null, brand: BrandRef | null) => {
       id: color.id,
       brandSlug: brand.slug,
       code: color.code,
-      name: color.name,
-      variant: color.variant
+      name: color.name
     };
     const raw = window.localStorage.getItem("recentColors");
     const existing = raw ? (JSON.parse(raw) as typeof entry[]) : [];
@@ -205,6 +215,9 @@ export default function PaintMixApp() {
   const [brandSlug, setBrandSlug] = useState<string>("");
   const [query, setQuery] = useState("");
   const [selectedColor, setSelectedColor] = useState<ColorResult | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<ColorVariant | null>(
+    null
+  );
   const [totalGrams, setTotalGrams] = useState(100);
   const [isSheetOpen, setSheetOpen] = useState(false);
   const debouncedQuery = useDebounce(query, 250);
@@ -245,10 +258,12 @@ export default function PaintMixApp() {
   });
 
   const formulaQuery = useQuery({
-    queryKey: ["formula", selectedColor?.id, totalGrams],
+    queryKey: ["formula", selectedColor?.id, selectedVariant, totalGrams],
     queryFn: () =>
       fetchJson<FormulaResponse>(
-        `/api/colors/${selectedColor?.id}/formula?totalGrams=${totalGrams}`
+        `/api/colors/${selectedColor?.id}/formula?totalGrams=${totalGrams}${
+          selectedVariant ? `&variant=${selectedVariant}` : ""
+        }`
       ),
     enabled: Boolean(selectedColor),
     placeholderData: (previous) => previous
@@ -263,8 +278,19 @@ export default function PaintMixApp() {
 
   useRecentColors(selectedColor, selectedBrand);
 
+  useEffect(() => {
+    if (!selectedColor) {
+      setSelectedVariant(null);
+    }
+  }, [selectedColor]);
+
   const handleSelectColor = (color: ColorResult) => {
     setSelectedColor(color);
+    const nextVariant =
+      color.formulas.find((formula) => formula.variant === "V1")?.variant ??
+      color.formulas[0]?.variant ??
+      null;
+    setSelectedVariant(nextVariant);
     setSheetOpen(true);
   };
 
@@ -279,6 +305,8 @@ export default function PaintMixApp() {
   }, [formulaQuery.data, t]);
 
   const results = searchQuery.data?.results ?? [];
+  const hasMultipleVariants =
+    selectedColor && selectedColor.formulas.length > 1;
 
   const formulaContent = (
     <div className="space-y-4">
@@ -291,18 +319,45 @@ export default function PaintMixApp() {
             <h2 className="text-xl font-semibold">
               {selectedColor.code} {selectedColor.name}
             </h2>
-            <p className="text-sm text-slate-500">
-              {t("color.variant.label")}: {t(`variant.${selectedColor.variant}`)}
-            </p>
-            <p className="text-sm text-slate-500">
-              {t("color.productionDate.label")}: {formatDate(selectedColor.productionDate)}
-            </p>
+            {selectedVariant && (
+              <p className="text-sm text-slate-500">
+                {t("color.variant.label")}: {t(`variant.${selectedVariant}`)}
+              </p>
+            )}
+            {selectedColor.productionDate && (
+              <p className="text-sm text-slate-500">
+                {t("color.productionDate.label")}: {formatDate(selectedColor.productionDate)}
+              </p>
+            )}
             {selectedColor.notes && (
               <p className="text-sm text-slate-500">
                 {t("color.notes.label")}: {selectedColor.notes}
               </p>
             )}
           </div>
+          {hasMultipleVariants && (
+            <div>
+              <p className="text-sm font-medium text-slate-600">
+                {t("color.variant.label")}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {selectedColor.formulas.map((formula) => (
+                  <button
+                    key={formula.variant}
+                    type="button"
+                    onClick={() => setSelectedVariant(formula.variant)}
+                    className={`rounded-full border px-4 py-2 text-sm font-medium ${
+                      selectedVariant === formula.variant
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {t(`variant.${formula.variant}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="space-y-3">
             <label className="block text-sm font-medium text-slate-600">
               {t("formula.totalGrams.label")}
@@ -520,16 +575,17 @@ export default function PaintMixApp() {
                         <div className="text-sm font-semibold text-slate-800">
                           {color.code} {color.name}
                         </div>
-                        <div className="text-xs text-slate-500">
-                          {t("color.variant.label")}: {t(`variant.${color.variant}`)}
-                        </div>
-                        <div className="text-xs text-slate-500">
-                          {t("color.productionDate.label")}:{" "}
-                          {formatDate(color.productionDate)}
-                        </div>
-                        <div className="text-xs text-slate-400">
-                          {color.brandName} ({color.brandSlug})
-                        </div>
+                        {color.productionDate && (
+                          <div className="text-xs text-slate-500">
+                            {t("color.productionDate.label")}:{" "}
+                            {formatDate(color.productionDate)}
+                          </div>
+                        )}
+                        {!brandSlug && (
+                          <div className="text-xs text-slate-400">
+                            {color.brandName} ({color.brandSlug})
+                          </div>
+                        )}
                       </div>
                       <span className="text-xs text-slate-400">{t("common.view")}</span>
                     </button>

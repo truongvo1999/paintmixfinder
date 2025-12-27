@@ -80,10 +80,9 @@ export async function POST(request: Request) {
       }
       const saved = await tx.color.upsert({
         where: {
-          brandId_code_variant: {
+          brandId_code: {
             brandId,
-            code: color.code,
-            variant: color.variant
+            code: color.code
           }
         },
         update: {
@@ -95,22 +94,17 @@ export async function POST(request: Request) {
           brandId,
           code: color.code,
           name: color.name,
-          variant: color.variant,
           productionDate: color.productionDate,
           notes: color.notes
         }
       });
-      const key = [color.brandSlug, color.code, color.variant].join("::");
+      const key = [color.brandSlug, color.code].join("::");
       colorMap.set(key, saved.id);
     }
 
     const componentGroups = new Map<string, typeof preview.data.components>();
     preview.data.components.forEach((component) => {
-      const key = [
-        component.brandSlug,
-        component.colorCode,
-        component.colorVariant
-      ].join("::");
+      const key = [component.brandSlug, component.colorCode].join("::");
       const list = componentGroups.get(key) ?? [];
       list.push(component);
       componentGroups.set(key, list);
@@ -126,6 +120,7 @@ export async function POST(request: Request) {
         await tx.formulaComponent.createMany({
           data: list.map((component) => ({
             colorId,
+            variant: component.variant,
             tonerCode: component.tonerCode,
             tonerName: component.tonerName,
             parts: component.parts

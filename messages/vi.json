@@ -76,7 +76,6 @@
     "productionDate": "Ngày sản xuất",
     "notes": "Ghi chú",
     "colorCode": "Mã màu",
-    "colorVariant": "Biến thể màu",
     "tonerCode": "Mã mực",
     "tonerName": "Tên mực",
     "parts": "Phần"
@@ -98,7 +97,7 @@
     "missingColumns": "Thiếu cột: {columns}",
     "missingSheet": "Thiếu sheet: {sheet}",
     "unknownBrand": "Không tìm thấy brandSlug: {brandSlug}",
-    "unknownColorReference": "Không tìm thấy màu: {colorCode} ({colorVariant})"
+    "unknownColorReference": "Không tìm thấy màu: {colorCode} ({variant})"
   },
   "admin": {
     "title": "Nhập dữ liệu",

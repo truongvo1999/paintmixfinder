@@ -56,22 +56,20 @@ Upload **exactly three** files:
 - brandSlug (string, required)
 - code (string, required)
 - name (string, required)
-- variant (string, required: V1 or V2)
-- productionDate (string, required, ISO date)
+- productionDate (string, optional, ISO date)
 - notes (string, optional)
 
 **components**
 - brandSlug (string, required)
 - colorCode (string, required)
-- colorVariant (string, required: V1 or V2)
+- variant (string, required: V1 or V2)
 - tonerCode (string, required)
 - tonerName (string, required)
 - parts (number, required)
 
 ### Production date field
 
-- `productionDate` is required for every color and stored as a database `DateTime`.
-- For existing rows during migration, `variant` defaults to `V1` and `productionDate` defaults to `2024-01-01`.
+- `productionDate` is optional and stored as a database `DateTime` when provided.
 
 Accepted import formats for `productionDate`:
 - `YYYY-MM-DD` (preferred)
@@ -80,6 +78,13 @@ Accepted import formats for `productionDate`:
 Additional rules:
 - `productionDate` must be a valid date.
 - `productionDate` cannot be in the future.
+
+## Variant data model
+
+- Color records are unique by `(brandSlug, code)` and do **not** store a variant.
+- Component/formula rows store `variant` (`V1` or `V2`) and belong to a color.
+- Search results return one color per `(brandSlug, code)` and include `formulas[]`.
+- Variant labels are localized only in the UI (`variant.V1`, `variant.V2`).
 
 ### Localization (i18n)
 
@@ -110,3 +115,12 @@ Check:
 - Formula cards show toner code, name, parts, percent, grams.
 - No horizontal scrolling on mobile.
 - Table header sticks on desktop/tablet.
+
+## Variant QA checklist
+
+- Searching a code with multiple variants returns exactly one result.
+- No Color object contains a `variant` field.
+- Variant appears only in the formula/component UI.
+- Switching variants updates components and gram calculation.
+- Import works with variant only in `components.csv`.
+- API responses remain language-neutral (variants are not localized).

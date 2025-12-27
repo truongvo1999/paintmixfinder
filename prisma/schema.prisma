@@ -19,13 +19,12 @@ model Color {
   brandId        String
   code           String
   name           String
-  variant        String             @default("V1")
-  productionDate DateTime           @default(now())
+  productionDate DateTime?
   notes          String?
   brand          Brand              @relation(fields: [brandId], references: [id])
   components     FormulaComponent[]
 
-  @@unique([brandId, code, variant])
+  @@unique([brandId, code])
   @@index([brandId, code])
   @@index([brandId, name])
 }
@@ -33,8 +32,11 @@ model Color {
 model FormulaComponent {
   id        String  @id @default(cuid())
   colorId   String
+  variant   String
   tonerCode String
   tonerName String
   parts     Decimal
   color     Color   @relation(fields: [colorId], references: [id])
+
+  @@index([colorId, variant])
 }
