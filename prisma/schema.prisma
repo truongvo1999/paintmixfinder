@@ -14,11 +14,6 @@ model Brand {
   colors Color[]
 }
 
-enum ColorVariant {
-  V1
-  V2
-}
-
 model Color {
   id             String             @id @default(cuid())
   brandId        String
