@@ -24,7 +24,7 @@ model Color {
   brandId        String
   code           String
   name           String
-  variant        ColorVariant       @default(V1)
+  variant        String             @default("V1")
   productionDate DateTime           @default(now())
   notes          String?
   brand          Brand              @relation(fields: [brandId], references: [id])
