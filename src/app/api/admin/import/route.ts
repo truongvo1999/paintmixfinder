@@ -12,13 +12,13 @@ export async function POST(request: Request) {
   const adminKey = process.env.ADMIN_IMPORT_KEY;
 
   if (!adminKey || key !== adminKey) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json({ error: "admin.errors.unauthorized" }, { status: 401 });
   }
 
   const formData = await request.formData();
   const stepParse = stepSchema.safeParse(formData.get("step"));
   if (!stepParse.success) {
-    return Response.json({ error: "Invalid step" }, { status: 400 });
+    return Response.json({ error: "admin.errors.invalidStep" }, { status: 400 });
   }
 
   const excel = formData.get("excel");
@@ -36,7 +36,12 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Invalid upload" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "admin.errors.invalidUpload"
+      },
       { status: 400 }
     );
   }
@@ -72,56 +77,29 @@ export async function POST(request: Request) {
       if (!brandId) {
         throw new Error(`Missing brand for color ${color.code}`);
       }
-      const saved =
-        color.variant === null
-          ? await (async () => {
-              const existing = await tx.color.findFirst({
-                where: {
-                  brandId,
-                  code: color.code,
-                  variant: null
-                }
-              });
-              if (existing) {
-                return tx.color.update({
-                  where: { id: existing.id },
-                  data: {
-                    name: color.name,
-                    notes: color.notes
-                  }
-                });
-              }
-              return tx.color.create({
-                data: {
-                  brandId,
-                  code: color.code,
-                  name: color.name,
-                  variant: null,
-                  notes: color.notes
-                }
-              });
-            })()
-          : await tx.color.upsert({
-              where: {
-                brandId_code_variant: {
-                  brandId,
-                  code: color.code,
-                  variant: color.variant
-                }
-              },
-              update: {
-                name: color.name,
-                notes: color.notes
-              },
-              create: {
-                brandId,
-                code: color.code,
-                name: color.name,
-                variant: color.variant,
-                notes: color.notes
-              }
-            });
-      const key = [color.brandSlug, color.code, color.variant ?? ""].join("::");
+      const saved = await tx.color.upsert({
+        where: {
+          brandId_code_variant: {
+            brandId,
+            code: color.code,
+            variant: color.variant
+          }
+        },
+        update: {
+          name: color.name,
+          notes: color.notes,
+          productionDate: color.productionDate
+        },
+        create: {
+          brandId,
+          code: color.code,
+          name: color.name,
+          variant: color.variant,
+          productionDate: color.productionDate,
+          notes: color.notes
+        }
+      });
+      const key = [color.brandSlug, color.code, color.variant].join("::");
       colorMap.set(key, saved.id);
     }
 
@@ -130,7 +108,7 @@ export async function POST(request: Request) {
       const key = [
         component.brandSlug,
         component.colorCode,
-        component.colorVariant ?? ""
+        component.colorVariant
       ].join("::");
       const list = componentGroups.get(key) ?? [];
       list.push(component);

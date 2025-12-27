@@ -1,7 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import LocaleSwitcher from "@/components/LocaleSwitcher";
 
 const fetchJson = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -22,12 +24,15 @@ const useDebounce = (value: string, delay: number) => {
 
 type Brand = { id: string; slug: string; name: string };
 type BrandRef = { slug: string; name: string };
+type ColorVariant = "V1" | "V2";
+type Translator = ReturnType<typeof useTranslations>;
 
 type ColorResult = {
   id: string;
   code: string;
   name: string;
-  variant: string | null;
+  variant: ColorVariant;
+  productionDate: string;
   notes: string | null;
   brandSlug: string;
   brandName: string;
@@ -46,7 +51,8 @@ type FormulaResponse = {
     id: string;
     code: string;
     name: string;
-    variant: string | null;
+    variant: ColorVariant;
+    productionDate: string;
     notes: string | null;
     brand: Brand;
   };
@@ -59,7 +65,7 @@ const quickButtons = [100, 250, 500, 1000];
 
 const formatNumber = (value: number) => value.toFixed(2).replace(/\.00$/, "");
 
-const formatFormulaText = (response: FormulaResponse) => {
+const formatFormulaText = (response: FormulaResponse, t: Translator) => {
   const header = `${response.color.brand.name} - ${response.color.code} ${response.color.name}`;
   const lines = response.components.map(
     (component) =>
@@ -67,11 +73,17 @@ const formatFormulaText = (response: FormulaResponse) => {
         component.grams
       )}g (${formatNumber(component.percent)}%)`
   );
-  return [header, `Total: ${response.totalGrams}g`, ...lines].join("\n");
+  return [header, t("formula.totalLine", { value: response.totalGrams }), ...lines].join("\n");
 };
 
-const exportFormulaCsv = (response: FormulaResponse) => {
-  const headers = ["Toner Code", "Toner Name", "Parts", "Percent", "Grams"];
+const exportFormulaCsv = (response: FormulaResponse, t: Translator) => {
+  const headers = [
+    t("formula.csvHeaders.tonerCode"),
+    t("formula.csvHeaders.tonerName"),
+    t("formula.csvHeaders.parts"),
+    t("formula.csvHeaders.percent"),
+    t("formula.csvHeaders.grams")
+  ];
   const rows = response.components.map((component) => [
     component.tonerCode,
     component.tonerName,
@@ -188,12 +200,26 @@ const BottomSheet = ({
 };
 
 export default function PaintMixApp() {
+  const t = useTranslations();
+  const locale = useLocale();
   const [brandSlug, setBrandSlug] = useState<string>("");
   const [query, setQuery] = useState("");
   const [selectedColor, setSelectedColor] = useState<ColorResult | null>(null);
   const [totalGrams, setTotalGrams] = useState(100);
   const [isSheetOpen, setSheetOpen] = useState(false);
   const debouncedQuery = useDebounce(query, 250);
+
+  const dateFormatter = useMemo(() => {
+    const options = locale.startsWith("vi")
+      ? { day: "2-digit", month: "2-digit", year: "numeric" }
+      : { day: "numeric", month: "short", year: "numeric" };
+    return new Intl.DateTimeFormat(locale, options);
+  }, [locale]);
+
+  const formatDate = useCallback(
+    (value: string) => dateFormatter.format(new Date(value)),
+    [dateFormatter]
+  );
 
   const brandsQuery = useQuery({
     queryKey: ["brands"],
@@ -244,13 +270,13 @@ export default function PaintMixApp() {
 
   const handleCopy = useCallback(async () => {
     if (!formulaQuery.data) return;
-    await navigator.clipboard.writeText(formatFormulaText(formulaQuery.data));
-  }, [formulaQuery.data]);
+    await navigator.clipboard.writeText(formatFormulaText(formulaQuery.data, t));
+  }, [formulaQuery.data, t]);
 
   const handleExport = useCallback(() => {
     if (!formulaQuery.data) return;
-    exportFormulaCsv(formulaQuery.data);
-  }, [formulaQuery.data]);
+    exportFormulaCsv(formulaQuery.data, t);
+  }, [formulaQuery.data, t]);
 
   const results = searchQuery.data?.results ?? [];
 
@@ -259,20 +285,27 @@ export default function PaintMixApp() {
       {selectedColor ? (
         <>
           <div>
-            <p className="text-sm font-semibold text-slate-500">Selected Color</p>
+            <p className="text-sm font-semibold text-slate-500">
+              {t("color.selected.label")}
+            </p>
             <h2 className="text-xl font-semibold">
               {selectedColor.code} {selectedColor.name}
             </h2>
-            {selectedColor.variant && (
-              <p className="text-sm text-slate-500">Variant: {selectedColor.variant}</p>
-            )}
+            <p className="text-sm text-slate-500">
+              {t("color.variant.label")}: {t(`variant.${selectedColor.variant}`)}
+            </p>
+            <p className="text-sm text-slate-500">
+              {t("color.productionDate.label")}: {formatDate(selectedColor.productionDate)}
+            </p>
             {selectedColor.notes && (
-              <p className="text-sm text-slate-500">Notes: {selectedColor.notes}</p>
+              <p className="text-sm text-slate-500">
+                {t("color.notes.label")}: {selectedColor.notes}
+              </p>
             )}
           </div>
           <div className="space-y-3">
             <label className="block text-sm font-medium text-slate-600">
-              Total grams
+              {t("formula.totalGrams.label")}
               <input
                 type="number"
                 value={totalGrams}
@@ -308,7 +341,7 @@ export default function PaintMixApp() {
           )}
           {formulaQuery.isError && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-              Unable to load formula.
+              {t("formula.error")}
             </p>
           )}
           {formulaQuery.data && (
@@ -318,10 +351,12 @@ export default function PaintMixApp() {
                   <table className="min-w-full text-left text-sm">
                     <thead className="sticky top-0 bg-slate-100 text-xs uppercase tracking-wide text-slate-500">
                       <tr>
-                        <th className="px-4 py-3">Toner</th>
-                        <th className="px-4 py-3">Parts</th>
-                        <th className="px-4 py-3">%</th>
-                        <th className="px-4 py-3 text-right">Grams</th>
+                        <th className="px-4 py-3">{t("formula.table.toner")}</th>
+                        <th className="px-4 py-3">{t("formula.table.parts")}</th>
+                        <th className="px-4 py-3">{t("formula.table.percent")}</th>
+                        <th className="px-4 py-3 text-right">
+                          {t("formula.table.grams")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -357,15 +392,21 @@ export default function PaintMixApp() {
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-600">
                       <div>
-                        <div className="text-xs uppercase text-slate-400">Parts</div>
+                        <div className="text-xs uppercase text-slate-400">
+                          {t("formula.table.parts")}
+                        </div>
                         <div>{formatNumber(component.parts)}</div>
                       </div>
                       <div>
-                        <div className="text-xs uppercase text-slate-400">Percent</div>
+                        <div className="text-xs uppercase text-slate-400">
+                          {t("formula.table.percent")}
+                        </div>
                         <div>{formatNumber(component.percent)}%</div>
                       </div>
                       <div>
-                        <div className="text-xs uppercase text-slate-400">Grams</div>
+                        <div className="text-xs uppercase text-slate-400">
+                          {t("formula.table.grams")}
+                        </div>
                         <div>{formatNumber(component.grams)}g</div>
                       </div>
                     </div>
@@ -378,14 +419,14 @@ export default function PaintMixApp() {
                   onClick={handleCopy}
                   className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
                 >
-                  Copy formula
+                  {t("formula.copy")}
                 </button>
                 <button
                   type="button"
                   onClick={handleExport}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
                 >
-                  Export CSV
+                  {t("formula.export")}
                 </button>
               </div>
             </>
@@ -393,7 +434,7 @@ export default function PaintMixApp() {
         </>
       ) : (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
-          Select a color to see the formula.
+          {t("formula.empty")}
         </div>
       )}
     </div>
@@ -403,14 +444,15 @@ export default function PaintMixApp() {
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <h1 className="text-lg font-semibold">Paint Mix Finder</h1>
+          <h1 className="text-lg font-semibold">{t("app.title")}</h1>
+          <LocaleSwitcher />
         </div>
       </header>
       <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 md:grid md:grid-cols-[1.1fr_1.4fr]">
         <section className="space-y-4">
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
             <label className="block text-sm font-medium text-slate-600">
-              Brand/system
+              {t("search.brandLabel")}
               <select
                 value={brandSlug}
                 onChange={(event) => {
@@ -419,7 +461,7 @@ export default function PaintMixApp() {
                 }}
                 className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-base focus:border-slate-400 focus:outline-none"
               >
-                <option value="">All brands</option>
+                <option value="">{t("search.allBrands")}</option>
                 {brandsQuery.data?.brands.map((brandOption) => (
                   <option key={brandOption.id} value={brandOption.slug}>
                     {brandOption.name}
@@ -428,10 +470,10 @@ export default function PaintMixApp() {
               </select>
             </label>
             <label className="block text-sm font-medium text-slate-600">
-              Search colors
+              {t("search.label")}
               <input
                 type="search"
-                placeholder="Enter color code or name"
+                placeholder={t("search.placeholder")}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-base focus:border-slate-400 focus:outline-none"
@@ -440,7 +482,7 @@ export default function PaintMixApp() {
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600">
-              Results
+              {t("search.results")}
             </div>
             <div className="max-h-[420px] overflow-y-auto">
               {brandsQuery.isLoading && (
@@ -462,8 +504,8 @@ export default function PaintMixApp() {
               {!searchQuery.isLoading && results.length === 0 && (
                 <div className="p-4 text-sm text-slate-500">
                   {debouncedQuery
-                    ? "No colors found."
-                    : "Search results will appear here."}
+                    ? t("search.noResults")
+                    : t("search.empty")}
                 </div>
               )}
               <ul className="divide-y divide-slate-100">
@@ -478,16 +520,18 @@ export default function PaintMixApp() {
                         <div className="text-sm font-semibold text-slate-800">
                           {color.code} {color.name}
                         </div>
-                        {color.variant && (
-                          <div className="text-xs text-slate-500">
-                            Variant: {color.variant}
-                          </div>
-                        )}
+                        <div className="text-xs text-slate-500">
+                          {t("color.variant.label")}: {t(`variant.${color.variant}`)}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {t("color.productionDate.label")}:{" "}
+                          {formatDate(color.productionDate)}
+                        </div>
                         <div className="text-xs text-slate-400">
                           {color.brandName} ({color.brandSlug})
                         </div>
                       </div>
-                      <span className="text-xs text-slate-400">View</span>
+                      <span className="text-xs text-slate-400">{t("common.view")}</span>
                     </button>
                   </li>
                 ))}

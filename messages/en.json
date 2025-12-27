@@ -1,0 +1,140 @@
+{
+  "app": {
+    "title": "Paint Mix Finder"
+  },
+  "common": {
+    "language": "Language",
+    "languageOptions": {
+      "en": "English",
+      "vi": "Vietnamese"
+    },
+    "view": "View",
+    "preview": "Preview",
+    "import": "Import",
+    "working": "Working..."
+  },
+  "search": {
+    "brandLabel": "Brand/system",
+    "allBrands": "All brands",
+    "label": "Search colors",
+    "placeholder": "Enter color code or name",
+    "results": "Results",
+    "noResults": "No colors found.",
+    "empty": "Search results will appear here."
+  },
+  "color": {
+    "selected": {
+      "label": "Selected color"
+    },
+    "variant": {
+      "label": "Variant"
+    },
+    "notes": {
+      "label": "Notes"
+    },
+    "productionDate": {
+      "label": "Production date"
+    }
+  },
+  "formula": {
+    "totalGrams": {
+      "label": "Total grams"
+    },
+    "error": "Unable to load formula.",
+    "copy": "Copy formula",
+    "export": "Export CSV",
+    "empty": "Select a color to see the formula.",
+    "totalLine": "Total: {value}g",
+    "table": {
+      "toner": "Toner",
+      "parts": "Parts",
+      "percent": "Percent",
+      "grams": "Grams"
+    },
+    "csvHeaders": {
+      "tonerCode": "Toner Code",
+      "tonerName": "Toner Name",
+      "parts": "Parts",
+      "percent": "Percent",
+      "grams": "Grams"
+    }
+  },
+  "variant": {
+    "V1": "Topcoat",
+    "V2": "Primer"
+  },
+  "tables": {
+    "brands": "Brands",
+    "colors": "Colors",
+    "components": "Components"
+  },
+  "fields": {
+    "brandSlug": "Brand slug",
+    "code": "Code",
+    "name": "Name",
+    "variant": "Variant",
+    "productionDate": "Production date",
+    "notes": "Notes",
+    "colorCode": "Color code",
+    "colorVariant": "Color variant",
+    "tonerCode": "Toner code",
+    "tonerName": "Toner name",
+    "parts": "Parts"
+  },
+  "validation": {
+    "required": "{field} is required.",
+    "variant": {
+      "invalid": "{field} must be V1 or V2."
+    },
+    "parts": {
+      "positive": "{field} must be a positive number."
+    },
+    "productionDate": {
+      "invalid": "{field} must be a valid ISO date.",
+      "future": "{field} cannot be in the future."
+    }
+  },
+  "import": {
+    "missingColumns": "Missing columns: {columns}",
+    "missingSheet": "Missing sheet: {sheet}",
+    "unknownBrand": "Unknown brandSlug: {brandSlug}",
+    "unknownColorReference": "Unknown color reference: {colorCode} ({colorVariant})"
+  },
+  "admin": {
+    "title": "Admin Import",
+    "subtitle": "Validate and import paint brand, color, and formula data.",
+    "unauthorized": {
+      "title": "Unauthorized",
+      "message": "Provide a valid admin key to access this page."
+    },
+    "upload": {
+      "title": "Upload data",
+      "description": "Upload one Excel file with sheets named brands, colors, components, or upload three CSV files named brands.csv, colors.csv, components.csv.",
+      "excel": "Excel",
+      "csv": "CSV",
+      "selectedFile": "Selected: {name}",
+      "csvFiles": {
+        "brands": "brands.csv",
+        "colors": "colors.csv",
+        "components": "components.csv"
+      },
+      "csvHint": "Upload all three CSV files to enable preview."
+    },
+    "preview": {
+      "blocked": "Fix validation errors before importing.",
+      "completed": "Import completed: {brands} brands, {colors} colors, {components} components.",
+      "noRows": "No rows."
+    },
+    "errors": {
+      "title": "Errors",
+      "none": "No errors found.",
+      "row": "Row {row}: {message}",
+      "previewFailed": "Preview failed.",
+      "importFailed": "Import failed.",
+      "unauthorized": "Unauthorized.",
+      "invalidStep": "Invalid import step.",
+      "invalidUpload": "Invalid upload.",
+      "missingFiles": "Provide either one Excel file or three CSV files."
+    }
+  }
+}
