@@ -41,7 +41,7 @@ const expectedColumns = {
   },
   colors: {
     required: ["brandSlug", "code", "name"],
-    optional: ["productionDate", "notes"]
+    optional: ["productionDate", "colorCar", "notes"]
   },
   components: {
     required: [

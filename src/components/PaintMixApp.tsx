@@ -43,6 +43,7 @@ type ColorResult = {
   code: string;
   name: string;
   productionDate: string | null;
+  colorCar: string | null;
   notes: string | null;
   brandSlug: string;
   brandName: string;
@@ -63,6 +64,7 @@ type FormulaResponse = {
     code: string;
     name: string;
     productionDate: string | null;
+    colorCar: string | null;
     notes: string | null;
     brand: Brand;
   };
@@ -329,6 +331,11 @@ export default function PaintMixApp() {
                 {t("color.productionDate.label")}: {formatDate(selectedColor.productionDate)}
               </p>
             )}
+            {selectedColor.colorCar && (
+              <p className="text-sm text-slate-500">
+                {t("color.car.label")}: {selectedColor.colorCar}
+              </p>
+            )}
             {selectedColor.notes && (
               <p className="text-sm text-slate-500">
                 {t("color.notes.label")}: {selectedColor.notes}
@@ -579,6 +586,11 @@ export default function PaintMixApp() {
                           <div className="text-xs text-slate-500">
                             {t("color.productionDate.label")}:{" "}
                             {formatDate(color.productionDate)}
+                          </div>
+                        )}
+                        {color.colorCar && (
+                          <div className="text-xs text-slate-500">
+                            {color.colorCar}
                           </div>
                         )}
                         {!brandSlug && (

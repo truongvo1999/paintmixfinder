@@ -26,6 +26,9 @@
     "selected": {
       "label": "Selected color"
     },
+    "car": {
+      "label": "Car brand"
+    },
     "variant": {
       "label": "Variant"
     },
@@ -75,6 +78,7 @@
     "variant": "Variant",
     "productionDate": "Production date",
     "notes": "Notes",
+    "colorCar": "Car brand",
     "colorCode": "Color code",
     "tonerCode": "Toner code",
     "tonerName": "Toner name",
@@ -91,6 +95,10 @@
     "productionDate": {
       "invalid": "{field} must be a valid ISO date.",
       "future": "{field} cannot be in the future."
+    },
+    "colorCar": {
+      "invalid": "{field} must be a string.",
+      "tooLong": "{field} must be 100 characters or fewer."
     }
   },
   "import": {
