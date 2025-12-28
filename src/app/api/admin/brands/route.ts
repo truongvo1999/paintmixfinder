@@ -21,7 +21,8 @@ export async function GET(request: Request) {
   const page = parsePagination(searchParams.get("page"), 1);
   const pageSize = parsePagination(searchParams.get("pageSize"), 25);
   const sort = searchParams.get("sort") ?? "name";
-  const direction = searchParams.get("dir") === "desc" ? "desc" : "asc";
+  const direction: Prisma.SortOrder =
+    searchParams.get("dir") === "desc" ? "desc" : "asc";
   const skip = (page - 1) * pageSize;
 
   const where: Prisma.BrandWhereInput | undefined = query
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
       }
     : undefined;
 
-  const orderBy =
+  const orderBy: Prisma.BrandOrderByWithRelationInput =
     sort === "slug" ? { slug: direction } : { name: direction };
 
   const [data, total] = await prisma.$transaction([
