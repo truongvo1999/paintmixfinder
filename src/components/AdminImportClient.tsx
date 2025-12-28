@@ -52,7 +52,7 @@ const formatErrorMessage = (
   t: ReturnType<typeof useTranslations>,
   errorItem: ImportError
 ) => {
-  const field = errorItem.field ? t(`fields.${errorItem.field}`) : undefined;
+  const field = errorItem.field ? t(`fields.${errorItem.field}`) : "";
   if (errorItem.messageKey) {
     return t(errorItem.messageKey, {
       ...errorItem.messageValues,
