@@ -1,6 +1,6 @@
 # Paint Mix Finder
 
-A production-ready Paint Mix Finder built with Next.js App Router, TypeScript, Prisma (SQLite), Tailwind, Zod, and TanStack Query.
+A production-ready Paint Mix Finder built with Next.js App Router, TypeScript, Prisma (PostgreSQL), Tailwind, Zod, and TanStack Query.
 
 ## Setup
 
@@ -8,7 +8,25 @@ A production-ready Paint Mix Finder built with Next.js App Router, TypeScript, P
 npm install
 ```
 
-Create a local SQLite database and Prisma client:
+## Local development with Postgres
+
+### Option 1: Docker Compose (recommended)
+
+Start Postgres locally:
+
+```bash
+docker compose up -d
+```
+
+Create a `.env` file:
+
+```bash
+DATABASE_URL="postgresql://paintmix:paintmix@localhost:5432/paintmix?schema=public"
+ADMIN_IMPORT_KEY="your-secret-key"
+PRISMA_CLIENT_ENGINE_TYPE="binary"
+```
+
+Generate the Prisma client and run migrations:
 
 ```bash
 npm run prisma:generate
@@ -21,14 +39,81 @@ Run the app:
 npm run dev
 ```
 
-## Environment variables
+### Option 2: Connect to Cloud SQL from local (optional)
 
-Create a `.env` file:
+Use the Cloud SQL Auth Proxy to connect locally:
 
 ```bash
-DATABASE_URL="file:./dev.db"
-ADMIN_IMPORT_KEY="your-secret-key"
+gcloud sql instances describe INSTANCE_NAME
+gcloud sql connect INSTANCE_NAME --user=paintmix --database=paintmix
 ```
+
+Or start the Auth Proxy and point `DATABASE_URL` at localhost:
+
+```bash
+cloud-sql-proxy PROJECT:REGION:INSTANCE --port 5432
+```
+
+```bash
+DATABASE_URL="postgresql://paintmix:YOUR_PASSWORD@localhost:5432/paintmix?schema=public"
+```
+
+## Environment variables
+
+Create a `.env` file (see `.env.example`):
+
+```bash
+DATABASE_URL="postgresql://paintmix:paintmix@localhost:5432/paintmix?schema=public"
+ADMIN_IMPORT_KEY="your-secret-key"
+PRISMA_CLIENT_ENGINE_TYPE="binary"
+```
+
+## Deployment: Cloud Run + Cloud SQL (staging)
+
+### 1) Create a Cloud SQL Postgres instance
+
+Choose the smallest shared-core tier (e.g. `db-f1-micro` / `db-g1-small` where available) in the same region as Cloud Run.
+
+```bash
+gcloud sql instances create paintmix-staging \
+  --database-version=POSTGRES_16 \
+  --tier=db-f1-micro \
+  --region=REGION
+```
+
+### 2) Create the database and user
+
+```bash
+gcloud sql databases create paintmix --instance=paintmix-staging
+gcloud sql users create paintmix --instance=paintmix-staging --password=YOUR_PASSWORD
+```
+
+### 3) Deploy Cloud Run with Cloud SQL attached
+
+Attach the Cloud SQL instance when deploying:
+
+```bash
+gcloud run deploy paintmix-staging \
+  --image=IMAGE_URL \
+  --region=REGION \
+  --add-cloudsql-instances=PROJECT:REGION:paintmix-staging
+```
+
+### 4) Set DATABASE_URL using the Cloud SQL Unix socket
+
+```bash
+DATABASE_URL="postgresql://paintmix:YOUR_PASSWORD@/paintmix?host=/cloudsql/PROJECT:REGION:paintmix-staging&schema=public"
+```
+
+### 5) Run Prisma migrations for staging
+
+Run migrations from CI/CD or locally against the staging `DATABASE_URL`:
+
+```bash
+npx prisma migrate deploy
+```
+
+> Note: do not run `prisma migrate dev` in the Docker build.
 
 ## Admin instructions
 

@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: paintmix
+      POSTGRES_PASSWORD: paintmix
+      POSTGRES_DB: paintmix
+    ports:
+      - "5432:5432"
+    volumes:
+      - paintmix_pg:/var/lib/postgresql/data
+
+volumes:
+  paintmix_pg:
