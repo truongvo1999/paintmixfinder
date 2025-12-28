@@ -1,0 +1,40 @@
+git pull origin main
+
+
+docker run --name paintmixfinder-local -p 3000:3000 --env-file .env.staging paintmixfinder-staging
+
+// tag and push to gloud
+docker tag paintmixfinder-staging asia-southeast1-docker.pkg.dev/sontuquy/paintmix-repo/paintmixfinder-staging:latest
+docker push asia-southeast1-docker.pkg.dev/sontuquy/paintmix-repo/paintmixfinder-staging:latest
+
+
+
+gcloud run deploy paintmixfinder-staging --image asia-southeast1-docker.pkg.dev/sontuquy/paintmix-repo/paintmixfinder-staging:latest --platform managed  --region asia-southeast1 --allow-unauthenticated --port 3000 --memory 1Gi --cpu 1
+
+gcloud run services update paintmixfinder-staging --add-cloudsql-instances sontuquy:asia-southeast1:paintmix
+
+gcloud run services update paintmixfinder-staging --set-env-vars DATABASE_URL="postgresql://paintmix:Paintmix_1978@/paintmix?host=/cloudsql/sontuquy:asia-southeast1:paintmix&schema=public",ADMIN_IMPORT_KEY=1234
+
+
+cloud-sql-proxy sontuquy:asia-southeast1:paintmix --port 5432
+
+set DATABASE_URL=postgresql://paintmix:Paintmix_1978@localhost:5432/paintmix?schema=public 
+npx prisma migrate deploy
+
+
+gcloud run services describe paintmixfinder-staging --region asia-southeast1 --format="value(spec.template.spec.serviceAccountName)"
+
+gcloud secrets add-iam-policy-binding ADMIN_IMPORT_KEY --member="serviceAccount:271147023522-compute@developer.gserviceaccount.com" --role="roles/secretmanager.secretAccessor"
+gcloud secrets add-iam-policy-binding DATABASE_URL --member="serviceAccount:271147023522-compute@developer.gserviceaccount.com" --role="roles/secretmanager.secretAccessor"
+
+gcloud run services update paintmixfinder-staging --region asia-southeast1 --set-secrets ADMIN_IMPORT_KEY=ADMIN_IMPORT_KEY:latest --set-secrets DATABASE_URL=DATABASE_URL:latest
+
+gcloud run services describe paintmixfinder-staging --region asia-southeast1 --format="yaml(spec.template.spec.containers[0].env)"
+
+
+gcloud run services update paintmixfinder-staging --region asia-southeast1 --set-env-vars RESTART_AT=$(date +%s)
+
+
+gcloud run services update paintmixfinder-staging --region asia-southeast1 --remove-env-vars DATABASE_URL --remove-env-vars ADMIN_IMPORT_KEY
+
+gcloud run services update paintmixfinder-staging --region asia-southeast1 --set-env-vars DATABASE_URL="postgresql://paintmix:Paintmix_1978/paintmix?host=/cloudsql/sontuquy:asia-southeast1:paintmix&schema=public", ADMIN_IMPORT_KEY=1234
