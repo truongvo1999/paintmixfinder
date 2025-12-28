@@ -15,7 +15,7 @@ npm install
 Start Postgres locally:
 
 ```bash
-docker compose up -d
+npm run db:up
 ```
 
 Create a `.env` file:
@@ -26,17 +26,23 @@ ADMIN_IMPORT_KEY="your-secret-key"
 PRISMA_CLIENT_ENGINE_TYPE="binary"
 ```
 
-Generate the Prisma client and run migrations:
+Bootstrap the database from schema:
 
 ```bash
-npm run prisma:generate
-npm run prisma:migrate
+npx prisma generate
+npx prisma migrate dev
 ```
 
 Run the app:
 
 ```bash
 npm run dev
+```
+
+### Reset workflow (local dev)
+
+```bash
+npm run db:reset
 ```
 
 ### Option 2: Connect to Cloud SQL from local (optional)
@@ -67,6 +73,15 @@ DATABASE_URL="postgresql://paintmix:paintmix@localhost:5432/paintmix?schema=publ
 ADMIN_IMPORT_KEY="your-secret-key"
 PRISMA_CLIENT_ENGINE_TYPE="binary"
 ```
+
+## Staging/production database workflow
+
+```bash
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
+npx prisma migrate deploy
+```
+
+Start the app after migrations finish.
 
 ## Deployment: Cloud Run + Cloud SQL (staging)
 

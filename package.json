@@ -7,18 +7,18 @@
   "private": true,
 
   "scripts": {
-
     "dev": "next dev",
-
     "build": "next build",
-
     "start": "next start",
-
     "lint": "next lint",
-
     "prisma:generate": "prisma generate",
-
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset --force",
+    "db:studio": "prisma studio",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down"
 
   },
 
@@ -67,4 +67,3 @@
   }
 
 }
-
