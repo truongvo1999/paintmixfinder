@@ -23,8 +23,14 @@ SELECT "id",
        "notes"
 FROM "Color";
 
+ALTER TABLE "FormulaComponent" DROP CONSTRAINT "FormulaComponent_colorId_fkey";
+
 DROP TABLE "Color";
 ALTER TABLE "new_Color" RENAME TO "Color";
+
+ALTER TABLE "FormulaComponent"
+ADD CONSTRAINT "FormulaComponent_colorId_fkey"
+FOREIGN KEY ("colorId") REFERENCES "Color" ("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 CREATE UNIQUE INDEX "Color_brandId_code_variant_key" ON "Color"("brandId", "code", "variant");
 CREATE INDEX "Color_brandId_code_idx" ON "Color"("brandId", "code");
