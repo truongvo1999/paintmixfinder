@@ -234,7 +234,7 @@ export default function PaintMixApp() {
   const debouncedQuery = useDebounce(query, 250);
 
   const dateFormatter = useMemo(() => {
-    const options = safeLocale.startsWith("vi")
+    const options: Intl.DateTimeFormatOptions = safeLocale.startsWith("vi")
       ? { day: "2-digit", month: "2-digit", year: "numeric" }
       : { day: "numeric", month: "short", year: "numeric" };
     return new Intl.DateTimeFormat(safeLocale, options);
