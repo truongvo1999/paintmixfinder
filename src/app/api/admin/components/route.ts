@@ -28,16 +28,17 @@ export async function GET(request: Request) {
     searchParams.get("dir") === "desc" ? "desc" : "asc";
   const skip = (page - 1) * pageSize;
 
-  const where = {
+  const queryMode: Prisma.QueryMode = "insensitive";
+  const where: Prisma.FormulaComponentWhereInput = {
     ...(variant ? { variant } : {}),
     ...(brandSlug ? { color: { brand: { slug: brandSlug } } } : {}),
     ...(colorCode ? { color: { code: colorCode } } : {}),
     ...(query
       ? {
           OR: [
-            { tonerCode: { contains: query, mode: "insensitive" } },
-            { tonerName: { contains: query, mode: "insensitive" } },
-            { color: { code: { contains: query, mode: "insensitive" } } }
+            { tonerCode: { contains: query, mode: queryMode } },
+            { tonerName: { contains: query, mode: queryMode } },
+            { color: { code: { contains: query, mode: queryMode } } }
           ]
         }
       : {})
