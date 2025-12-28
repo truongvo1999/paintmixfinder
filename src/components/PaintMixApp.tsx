@@ -214,6 +214,15 @@ const BottomSheet = ({
 export default function PaintMixApp() {
   const t = useTranslations();
   const locale = useLocale();
+  const safeLocale = useMemo(() => {
+    const candidate = locale.replace("_", "-");
+    try {
+      new Intl.DateTimeFormat(candidate);
+      return candidate;
+    } catch (error) {
+      return "en";
+    }
+  }, [locale]);
   const [brandSlug, setBrandSlug] = useState<string>("");
   const [query, setQuery] = useState("");
   const [selectedColor, setSelectedColor] = useState<ColorResult | null>(null);
@@ -225,11 +234,11 @@ export default function PaintMixApp() {
   const debouncedQuery = useDebounce(query, 250);
 
   const dateFormatter = useMemo(() => {
-    const options = locale.startsWith("vi")
+    const options = safeLocale.startsWith("vi")
       ? { day: "2-digit", month: "2-digit", year: "numeric" }
       : { day: "numeric", month: "short", year: "numeric" };
-    return new Intl.DateTimeFormat(locale, options);
-  }, [locale]);
+    return new Intl.DateTimeFormat(safeLocale, options);
+  }, [safeLocale]);
 
   const formatDate = useCallback(
     (value: string) => dateFormatter.format(new Date(value)),
