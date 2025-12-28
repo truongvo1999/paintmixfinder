@@ -6,7 +6,7 @@ CREATE TABLE "new_Color" (
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "variant" TEXT NOT NULL DEFAULT 'V1',
-    "productionDate" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "productionDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "notes" TEXT,
     CONSTRAINT "Color_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "Brand" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -16,4 +16,3 @@ ALTER TABLE "new_Color" RENAME TO "Color";
 CREATE INDEX "Color_brandId_code_idx" ON "Color"("brandId", "code");
 CREATE INDEX "Color_brandId_name_idx" ON "Color"("brandId", "name");
 CREATE UNIQUE INDEX "Color_brandId_code_variant_key" ON "Color"("brandId", "code", "variant");
-

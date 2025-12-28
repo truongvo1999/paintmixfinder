@@ -10,7 +10,7 @@ CREATE TABLE "new_Color" (
     "brandId" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "productionDate" DATETIME,
+    "productionDate" TIMESTAMP(3),
     "notes" TEXT,
     CONSTRAINT "Color_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "Brand" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -33,4 +33,3 @@ INSERT INTO "new_FormulaComponent" ("colorId", "id", "parts", "tonerCode", "tone
 DROP TABLE "FormulaComponent";
 ALTER TABLE "new_FormulaComponent" RENAME TO "FormulaComponent";
 CREATE INDEX "FormulaComponent_colorId_variant_idx" ON "FormulaComponent"("colorId", "variant");
-
