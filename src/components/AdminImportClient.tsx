@@ -96,10 +96,12 @@ export default function AdminImportClient({ adminKey }: { adminKey: string }) {
       const res = await fetch(`/api/admin/import/status?key=${adminKey}`);
       const data = (await res.json()) as ImportStatus | { error?: string };
       if (!res.ok) {
-        throw new Error(
-          typeof data.error === "string"
+        const errorMessage =
+          "error" in data && typeof data.error === "string"
             ? t(data.error)
-            : t("admin.import.statusFailed")
+            : t("admin.import.statusFailed");
+        throw new Error(
+          errorMessage
         );
       }
       return data as ImportStatus;
