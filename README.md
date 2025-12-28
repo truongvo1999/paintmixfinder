@@ -29,8 +29,8 @@ PRISMA_CLIENT_ENGINE_TYPE="binary"
 Bootstrap the database from schema:
 
 ```bash
-npx prisma generate
-npx prisma migrate dev
+npm run prisma:generate
+npm run db:dev
 ```
 
 Run the app:
@@ -82,6 +82,32 @@ npx prisma migrate deploy
 ```
 
 Start the app after migrations finish.
+
+> **Migration squash notice:** this repo keeps a single baseline migration under
+> `prisma/migrations/*_init/`. If you previously applied older incremental
+> migrations on staging, you must **recreate the database** (preferred for small
+> datasets) or establish a new baseline before running `prisma migrate deploy`.
+
+## Migration validation (PostgreSQL)
+
+To verify the SQL is PostgreSQL-compatible and that the baseline migration
+applies cleanly from scratch:
+
+```bash
+npm run db:up
+```
+
+```bash
+DATABASE_URL="postgresql://paintmix:paintmix@localhost:5432/paintmix?schema=public"
+npm run db:reset
+npm run db:dev
+npm run prisma:generate
+```
+
+Inspect the single migration SQL at
+`prisma/migrations/*_init/migration.sql` and confirm it uses PostgreSQL types
+(`TEXT`, `TIMESTAMP`, `BOOLEAN`, `DECIMAL`) and standard `CREATE TABLE/INDEX`
+syntax.
 
 ## Deployment: Cloud Run + Cloud SQL (staging)
 
