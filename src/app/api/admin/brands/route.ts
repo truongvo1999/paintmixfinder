@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { isAdminAuthorized, unauthorizedResponse } from "@/lib/admin/auth";
 import { brandRowSchema } from "@/lib/validation";
@@ -23,14 +24,14 @@ export async function GET(request: Request) {
   const direction = searchParams.get("dir") === "desc" ? "desc" : "asc";
   const skip = (page - 1) * pageSize;
 
-  const where = query
+  const where: Prisma.BrandWhereInput | undefined = query
     ? {
         OR: [
-          { slug: { contains: query, mode: "insensitive" } },
-          { name: { contains: query, mode: "insensitive" } }
+          { slug: { contains: query, mode: Prisma.QueryMode.insensitive } },
+          { name: { contains: query, mode: Prisma.QueryMode.insensitive } }
         ]
       }
-    : {};
+    : undefined;
 
   const orderBy =
     sort === "slug" ? { slug: direction } : { name: direction };
