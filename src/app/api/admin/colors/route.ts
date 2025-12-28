@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { isAdminAuthorized, unauthorizedResponse } from "@/lib/admin/auth";
 import { colorRowSchema } from "@/lib/validation";
 
@@ -21,7 +22,8 @@ export async function GET(request: Request) {
   const page = parsePagination(searchParams.get("page"), 1);
   const pageSize = parsePagination(searchParams.get("pageSize"), 25);
   const sort = searchParams.get("sort") ?? "code";
-  const direction = searchParams.get("dir") === "desc" ? "desc" : "asc";
+  const direction: Prisma.SortOrder =
+    searchParams.get("dir") === "desc" ? "desc" : "asc";
   const skip = (page - 1) * pageSize;
 
   const where = {
@@ -37,7 +39,7 @@ export async function GET(request: Request) {
       : {})
   };
 
-  const orderBy =
+  const orderBy: Prisma.ColorOrderByWithRelationInput =
     sort === "name"
       ? { name: direction }
       : sort === "productionDate"
